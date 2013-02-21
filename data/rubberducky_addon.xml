@@ -1,0 +1,769 @@
+<?xml version="1.0"?>
+<!-- This file assume that rubberducky.xml is loaded (which provides the geometry) -->
+<COLLADA>
+  <asset>
+    <created>2011-04-12T13:23:22Z</created>
+    <modified>2011-04-12T13:23:22Z</modified>
+  </asset>
+
+  <library_effects>
+    <effect id="effect_solid">
+    <newparam sid="modelview_projection_matrix"><semantic>MODELVIEW_PROJECTION_MATRIX</semantic><float4x4>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float4x4></newparam>
+    <newparam sid="color"><float3>0.5 0.5 0.7</float3></newparam>
+
+     <profile_GLSL>
+     <code sid="vs_es">
+uniform mat4 MVP;
+attribute vec3 position;
+void
+main()
+{
+    gl_Position = MVP * vec4( position, 1.0 );
+}
+        </code>
+        <code sid="fs_es">
+uniform vec3 color;
+void
+main()
+{
+    gl_FragColor = vec4( color, 1.0 );
+}
+        </code>
+        <technique sid="default">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE"/>
+            </states>
+            <program>
+              <shader stage="VERTEX"><sources><inline/><import ref="vs_es"/></sources></shader>
+              <shader stage="FRAGMENT"><sources><inline/><import ref="fs_es"/></sources></shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_uniform symbol="MVP"><param ref="modelview_projection_matrix" /></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+          </pass>
+
+        </technique>
+      </profile_GLSL>
+
+
+     <profile_GLES2>
+     <code sid="vs_es">
+uniform mat4 MVP;
+attribute vec3 position;
+void
+main()
+{
+    gl_Position = MVP * vec4( position, 1.0 );
+}
+        </code>
+        <code sid="fs_es">
+#ifdef GL_ES
+precision highp float;
+#endif
+uniform vec3 color;
+void
+main()
+{
+    gl_FragColor = vec4( color, 1.0 );
+}
+        </code>
+        <technique sid="default">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE"/>
+            </states>
+            <program>
+              <shader stage="VERTEX"><sources><inline/><import ref="vs_es"/></sources></shader>
+              <shader stage="FRAGMENT"><sources><inline/><import ref="fs_es"/></sources></shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_uniform symbol="MVP"><param ref="modelview_projection_matrix" /></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+          </pass>
+
+        </technique>
+      </profile_GLES2>
+
+
+    </effect>
+
+
+    <effect id="effect_pntri_phong">
+
+    <newparam sid="modelview_projection_matrix"><semantic>MODELVIEW_PROJECTION_MATRIX</semantic><float4x4>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float4x4></newparam>
+    <newparam sid="projection_matrix"><semantic>PROJECTION_MATRIX</semantic><float4x4>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float4x4></newparam>
+    <newparam sid="modelview_matrix"><semantic>MODELVIEW_MATRIX</semantic><float4x4>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float4x4></newparam>
+    <newparam sid="normal_matrix"><semantic>NORMAL_MATRIX</semantic><float4x4>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float4x4></newparam>
+    <newparam sid="light_z"><semantic>LIGHT0_Z_WORLD</semantic><float3>0 0 1</float3></newparam>
+    <newparam sid="color"><float3>0.5 0.5 0.7</float3></newparam>
+    <newparam sid="line_color"><float3>1.0 1.0 1.0</float3></newparam>
+
+    <profile_GLSL>
+      <code sid="vs">
+#version 410
+in vec3 position;
+in vec3 normal;
+out VO {
+    vec3 pos;
+    vec3 nrm;
+} out_v;
+uniform mat4 M;
+uniform mat3 NM;
+void
+main()
+{
+    vec4 posh = M * vec4( position, 1.0 );
+    out_v.pos = (1.0/posh.w)*posh.xyz;
+    out_v.nrm = normalize( NM * normal );
+}
+      </code>
+      <code sid="cs">
+#version 410
+layout(vertices=3) out;
+
+in VO {
+    vec3 pos;
+    vec3 nrm;
+} in_v[];
+
+out CE {
+    vec3 vtx;
+    vec3 tan1;
+    vec3 tan2;
+    vec3 nrm;
+    vec3 nrmi;
+} out_v[3];
+patch out vec3 cen;
+
+void
+main()
+{
+    int i0  = gl_InvocationID;
+    int i1 = (gl_InvocationID+1)%3;
+    int i2 = (gl_InvocationID+2)%3;
+
+    vec3 w = (in_v[i1].pos - in_v[i0].pos);
+
+    out_v[ gl_InvocationID ].vtx  = in_v[ i0 ].pos;
+    out_v[ gl_InvocationID ].tan1 = (2.f/3.f)*in_v[i0].pos
+                                  + (1.f/3.f)*in_v[i1].pos
+                                  - (1.f/3.f)*dot( w, in_v[i0].nrm )*in_v[i0].nrm;
+    out_v[ gl_InvocationID ].tan2 = (2.f/3.f)*in_v[i1].pos
+                                  + (1.f/3.f)*in_v[i0].pos
+                                  + (1.f/3.f)*dot( w, in_v[i1].nrm )*in_v[i1].nrm;
+
+    float v = 2.f*dot( w, in_v[i0].nrm + in_v[i1].nrm )/dot(w,w);
+
+    out_v[ gl_InvocationID ].nrm  = in_v[ i0 ].nrm;
+    out_v[ gl_InvocationID ].nrmi = normalize( in_v[i0].nrm + in_v[i1].nrm - v*w );
+
+    gl_TessLevelOuter[ gl_InvocationID ] = 6;
+
+    barrier();
+    if( i0 == 0 ) {
+        vec3 E = (1.f/6.f)*( out_v[0].tan1 + out_v[0].tan2 +
+                             out_v[1].tan1 + out_v[1].tan2 +
+                             out_v[2].tan1 + out_v[2].tan2 );
+        vec3 V = (1.f/3.f)*( out_v[0].vtx + out_v[1].vtx + out_v[2].vtx );
+        cen = E + (1.f/2.f)*(E-V);
+        gl_TessLevelInner[0] = 6;
+    }
+}
+      </code>
+      <code sid="es">
+#version 410 core
+layout (triangles, equal_spacing, ccw) in;
+in CE {
+    vec3 vtx;
+    vec3 tan1;
+    vec3 tan2;
+    vec3 nrm;
+    vec3 nrmi;
+} in_v[];
+out FI {
+    vec3 nrm;
+} out_v;
+patch in vec3 cen;
+
+uniform mat4 P;
+
+void
+main()
+{
+    float u = gl_TessCoord.x;
+    float v = gl_TessCoord.y;
+    float w = gl_TessCoord.z;
+
+    out_v.nrm = u*u*in_v[0].nrm + u*v*in_v[0].nrmi
+              + v*v*in_v[1].nrm + v*w*in_v[1].nrmi
+              + w*w*in_v[2].nrm + w*u*in_v[2].nrmi;
+
+    vec3 p = u*u*u*in_v[0].vtx + 3.f*u*u*v*in_v[0].tan1 + 3.f*u*v*v*in_v[0].tan2
+           + v*v*v*in_v[1].vtx + 3.f*v*v*w*in_v[1].tan1 + 3.f*v*w*w*in_v[1].tan2
+           + w*w*w*in_v[2].vtx + 3.f*w*w*u*in_v[2].tan1 + 3.f*w*u*u*in_v[2].tan2
+           + 6.f*u*v*w*cen;
+
+    gl_Position = P * vec4( p, 1.0 );
+}
+      </code>
+      <code sid="fs_phong">
+in FI {
+    vec3 nrm;
+} in_v;
+uniform vec3 light_z;
+uniform vec3 color;
+void
+main()
+{
+    vec3 n = normalize( in_v.nrm );
+    vec3 v = vec3( 0.f, 0.f, 1.f );
+    vec3 h = normalize( n + light_z );
+    float d = max( 0.1f, dot( n, light_z ) );
+    float s = pow( max( 0.0f, dot( n, h ) ), 30.f );
+    gl_FragColor = vec4( d*color +
+                         s*vec3(1.f), 1.0 );
+}
+      </code>
+      <code sid="fs_solid">
+uniform vec3 color;
+void
+main()
+{
+    gl_FragColor = vec4( color, 1.0 );
+}
+      </code>
+
+        <technique sid="wireframe">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE"/>
+              <polygon_mode value="FRONT_AND_BACK FILL" />
+              <polygon_offset_fill_enable value="TRUE" />
+              <polygon_offset value="1.0 1.0" />
+            </states>
+            <program>
+              <shader stage="VERTEX"><sources><inline/><import ref="vs"/></sources></shader>
+              <shader stage="TESSELLATION_CONTROL"><sources><inline /><import ref="cs" /></sources></shader>
+              <shader stage="TESSELLATION_EVALUATION"><sources><inline /><import ref="es" /></sources></shader>
+              <shader stage="FRAGMENT"><sources><inline/><import ref="fs_solid"/></sources></shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_attribute symbol="normal"><semantic>NORMAL</semantic></bind_attribute>
+              <bind_uniform symbol="P"><param ref="projection_matrix" /></bind_uniform>
+              <bind_uniform symbol="M"><param ref="modelview_matrix" /></bind_uniform>
+              <bind_uniform symbol="NM"><param ref="normal_matrix" /></bind_uniform>
+              <bind_uniform symbol="light_z"><param ref="light_z"/></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+            <extra>
+              <technique profile="Scene">
+                <primitive_override source="TRIANGLES" target="PATCHES" vertices="3" />
+              </technique>
+            </extra>
+          </pass>
+
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE"/>
+              <polygon_mode value="FRONT_AND_BACK LINE" />
+            </states>
+            <program>
+              <shader stage="VERTEX"><sources><inline/><import ref="vs"/></sources></shader>
+              <shader stage="TESSELLATION_CONTROL"><sources><inline /><import ref="cs" /></sources></shader>
+              <shader stage="TESSELLATION_EVALUATION"><sources><inline /><import ref="es" /></sources></shader>
+              <shader stage="FRAGMENT"><sources><inline/><import ref="fs_solid"/></sources></shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_attribute symbol="normal"><semantic>NORMAL</semantic></bind_attribute>
+              <bind_uniform symbol="P"><param ref="projection_matrix" /></bind_uniform>
+              <bind_uniform symbol="M"><param ref="modelview_matrix" /></bind_uniform>
+              <bind_uniform symbol="NM"><param ref="normal_matrix" /></bind_uniform>
+              <bind_uniform symbol="color"><param ref="line_color" /></bind_uniform>
+            </program>
+
+            <extra>
+              <technique profile="Scene">
+                <primitive_override source="TRIANGLES" target="PATCHES" vertices="3" />
+              </technique>
+            </extra>
+          </pass>
+        </technique>
+
+        <technique sid="solid">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE"/>
+            </states>
+            <program>
+              <shader stage="VERTEX"><sources><inline/><import ref="vs"/></sources></shader>
+              <shader stage="TESSELLATION_CONTROL"><sources><inline /><import ref="cs" /></sources></shader>
+              <shader stage="TESSELLATION_EVALUATION"><sources><inline /><import ref="es" /></sources></shader>
+              <shader stage="FRAGMENT"><sources><inline/><import ref="fs_phong"/></sources></shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_attribute symbol="normal"><semantic>NORMAL</semantic></bind_attribute>
+              <bind_uniform symbol="P"><param ref="projection_matrix" /></bind_uniform>
+              <bind_uniform symbol="M"><param ref="modelview_matrix" /></bind_uniform>
+              <bind_uniform symbol="NM"><param ref="normal_matrix" /></bind_uniform>
+              <bind_uniform symbol="light_z"><param ref="light_z"/></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+            <extra>
+              <technique profile="Scene">
+                <primitive_override source="TRIANGLES" target="PATCHES" vertices="3" />
+              </technique>
+            </extra>
+          </pass>
+        </technique>
+
+      </profile_GLSL>
+
+      <profile_GLES2>
+      <code sid="vs_es">
+uniform mat4 MVP;
+uniform mat3 NM;
+attribute vec3 position;
+attribute vec3 normal;
+varying vec3 es_normal;
+void
+main()
+{
+    es_normal = NM * normal;
+    gl_Position = MVP * vec4( position, 1.0 );
+}
+        </code>
+        <code sid="fs_es">
+#ifdef GL_ES
+precision highp float;
+#endif
+varying vec3 es_normal;
+uniform vec3 color;
+void
+main()
+{
+    vec3 light_z = normalize( vec3(1,1,1) );
+    gl_FragColor = vec4( color*max(0.1, dot( es_normal, light_z ) ), 1.0 );
+}
+        </code>
+        <technique sid="solid">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE"/>
+            </states>
+            <program>
+              <shader stage="VERTEX"><sources><inline/><import ref="vs_es"/></sources></shader>
+              <shader stage="FRAGMENT"><sources><inline/><import ref="fs_es"/></sources></shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_attribute symbol="normal"><semantic>NORMAL</semantic></bind_attribute>
+              <bind_uniform symbol="MVP"><param ref="modelview_projection_matrix" /></bind_uniform>
+              <bind_uniform symbol="NM"><param ref="normal_matrix" /></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+          </pass>
+
+        </technique>
+
+        <technique sid="discard">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE"/>
+            </states>
+            <program>
+              <shader stage="VERTEX"><sources><inline/><import ref="vs_es"/></sources></shader>
+              <shader stage="FRAGMENT"><sources><inline>void main() { discard; }</inline></sources></shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_attribute symbol="normal"><semantic>NORMAL</semantic></bind_attribute>
+              <bind_uniform symbol="MVP"><param ref="modelview_projection_matrix" /></bind_uniform>
+              <bind_uniform symbol="NM"><param ref="normal_matrix" /></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+          </pass>
+
+        </technique>
+
+      </profile_GLES2>
+
+    </effect>
+
+    <effect id="effect_shaded">
+      <newparam sid="mvp"><semantic>MODELVIEW_PROJECTION_MATRIX</semantic><float4x4>0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3</float4x4></newparam>
+      <newparam sid="nm"><semantic>NORMAL_MATRIX</semantic><float3x3>1 0 0 0 1 0 0 0 1</float3x3></newparam>
+      <newparam sid="light_z"><semantic>LIGHT0_Z_WORLD</semantic><float3>0 0 0</float3></newparam>
+      <newparam sid="color"><float3>1 1 1</float3></newparam>
+      <profile_GLSL>
+        <technique sid="default">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE" />
+            </states>
+            <program>
+              <shader stage="VERTEX">
+                <sources>
+                  <inline>
+uniform mat4 MVP;
+uniform mat3 NM;
+attribute vec3 position;
+attribute vec3 normal;
+varying vec3 es_normal;
+void
+main()
+{
+    es_normal = NM * normal;
+    gl_Position = MVP * vec4( position, 1.0 );
+}
+                  </inline>
+                </sources>
+              </shader>
+              <shader stage="FRAGMENT">
+                <sources>
+                  <inline>
+varying vec3 es_normal;
+uniform vec3 light_z;
+uniform vec3 color;
+void
+main()
+{
+    gl_FragColor = vec4( color*max(0.1, dot( normalize( es_normal ), light_z ) ), 1.0 );
+}
+                  </inline>
+                </sources>
+              </shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_attribute symbol="normal"><semantic>NORMAL</semantic></bind_attribute>
+              <bind_uniform symbol="MVP"><param ref="mvp" /></bind_uniform>
+              <bind_uniform symbol="NM"><param ref="nm" /></bind_uniform>
+              <bind_uniform symbol="light_z"><param ref="light_z"/></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+          </pass>
+        </technique>
+      </profile_GLSL>
+    </effect>
+
+  </library_effects>
+
+  <library_materials>
+
+    <material id="pntri_phong_yellow">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="solid"/>
+        <setparam ref="color"><float3>1.0 1.0 0.0</float3></setparam>
+      </instance_effect>
+    </material>
+    <material id="pntri_wireframe_yellow">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="wireframe"/>
+        <technique_hint profile="GLES2" ref="discard"/>
+        <setparam ref="color"><float3>0.5 0.5 0.0</float3></setparam>
+        <setparam ref="line_color"><float3>1.0 1.0 0.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+
+    <material id="pntri_phong_orange">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="solid"/>
+        <setparam ref="color"><float3>1.0 0.5 0.0</float3></setparam>
+      </instance_effect>
+    </material>
+    <material id="pntri_wireframe_orange">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="wireframe"/>
+        <technique_hint profile="GLES2" ref="discard"/>
+        <setparam ref="color"><float3>0.5 0.25 0.0</float3></setparam>
+        <setparam ref="line_color"><float3>1.0 0.5 0.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="pntri_phong_light_blue">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="solid"/>
+        <setparam ref="color"><float3>0.8 0.8 1.0</float3></setparam>
+      </instance_effect>
+    </material>
+    <material id="pntri_wireframe_light_blue">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="wireframe"/>
+        <technique_hint profile="GLES2" ref="discard"/>
+        <setparam ref="color"><float3>0.4 0.4 0.5</float3></setparam>
+        <setparam ref="line_color"><float3>0.8 0.8 1.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="pntri_phong_blue">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="solid"/>
+        <setparam ref="color"><float3>0.2 0.2 1.0</float3></setparam>
+      </instance_effect>
+    </material>
+    <material id="pntri_wireframe_blue">
+      <instance_effect url="effect_pntri_phong">
+        <technique_hint profile="GLSL" ref="wireframe"/>
+        <technique_hint profile="GLES2" ref="discard"/>
+        <setparam ref="color"><float3>0.0 0.0 0.5</float3></setparam>
+        <setparam ref="line_color"><float3>0.2 0.2 1.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+
+    <material id="material_pupil">
+      <instance_effect url="#effect_shaded">
+        <setparam ref="color"><float3>0 0 1.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_blue_eye">
+      <instance_effect url="#effect_shaded">
+        <setparam ref="color"><float3>0.8 0.8 1</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_red_eye">
+      <instance_effect url="#effect_shaded">
+        <setparam ref="color"><float3>1 0.5 0.2</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_black_eye">
+      <instance_effect url="#effect_shaded">
+        <setparam ref="color"><float3>0.3 0.0 0.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_beak">
+      <instance_effect url="#effect_shaded">
+        <setparam ref="color"><float3>1.0 0.5 0</float3></setparam>
+      </instance_effect>
+    </material>
+    <material id="material_body">
+      <instance_effect url="#effect_shaded">
+        <setparam ref="color"><float3>1.0 1.0 0</float3></setparam>
+      </instance_effect>
+    </material>
+
+
+    <material id="material_cm_blue">
+      <instance_effect url="#effect_solid">
+        <setparam ref="color"><float3>0 0 1.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_cm_light_blue">
+      <instance_effect url="#effect_solid">
+        <setparam ref="color"><float3>0.8 0.8 1</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_cm_red_eye">
+      <instance_effect url="#effect_solid">
+        <setparam ref="color"><float3>1 0.5 0.2</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_cm_black_eye">
+      <instance_effect url="#effect_solid">
+        <setparam ref="color"><float3>0.3 0.0 0.0</float3></setparam>
+      </instance_effect>
+    </material>
+
+    <material id="material_cm_orange">
+      <instance_effect url="#effect_solid">
+        <setparam ref="color"><float3>1.0 0.5 0</float3></setparam>
+      </instance_effect>
+    </material>
+    <material id="material_cm_yellow">
+      <instance_effect url="#effect_solid">
+        <setparam ref="color"><float3>1.0 1.0 0</float3></setparam>
+      </instance_effect>
+    </material>
+
+
+  </library_materials>
+
+  <library_lights>
+
+    <light id="my_light">
+      <technique_common>
+        <point>
+          <color>0.8 1 1</color>
+        </point>
+      </technique_common>
+    </light>
+
+  </library_lights>
+
+  <library_nodes>
+    <node id="geometry_node">
+      <scale>0.5 0.5 0.5</scale>
+
+      <node id="louie" layer="none ducks">
+        <translate sid="pos">1.0 -0.5 0.0</translate>
+        <node layer="solid">
+          <instance_geometry url="#rubberducky">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="pntri_phong_light_blue" />
+                <instance_material symbol="pupil" target="pntri_phong_blue" />
+                <instance_material symbol="beak"  target="pntri_phong_orange" />
+                <instance_material symbol="body"  target="pntri_phong_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node layer="wireframe">
+          <instance_geometry url="#rubberducky">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="pntri_wireframe_light_blue" />
+                <instance_material symbol="pupil" target="pntri_wireframe_blue" />
+                <instance_material symbol="beak"  target="pntri_wireframe_orange" />
+                <instance_material symbol="body"  target="pntri_wireframe_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node layer="cm">
+          <instance_geometry url="#rubberducky_lines">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="material_cm_light_blue" />
+                <instance_material symbol="pupil" target="material_cm_blue" />
+                <instance_material symbol="beak"  target="material_cm_orange" />
+                <instance_material symbol="body"  target="material_cm_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+      </node>
+
+      <node id="dewey" layer="none ducks">
+        <translate sid="pos">0.0 -0.5 0.0</translate>
+        <node layer="solid">
+          <instance_geometry url="#rubberducky">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="pntri_phong_light_blue" />
+                <instance_material symbol="pupil" target="pntri_phong_blue" />
+                <instance_material symbol="beak"  target="pntri_phong_orange" />
+                <instance_material symbol="body"  target="pntri_phong_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node layer="wireframe">
+          <instance_geometry url="#rubberducky">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="pntri_wireframe_light_blue" />
+                <instance_material symbol="pupil" target="pntri_wireframe_blue" />
+                <instance_material symbol="beak"  target="pntri_wireframe_orange" />
+                <instance_material symbol="body"  target="pntri_wireframe_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node layer="cm">
+          <instance_geometry url="#rubberducky_lines">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="material_cm_light_blue" />
+                <instance_material symbol="pupil" target="material_cm_blue" />
+                <instance_material symbol="beak"  target="material_cm_orange" />
+                <instance_material symbol="body"  target="material_cm_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+      </node>
+
+      <node id="huey" layer="none ducks">
+        <translate sid="pos">-1.0 -0.5 0.0</translate>
+        <node layer="solid">
+          <instance_geometry url="#rubberducky">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="pntri_phong_light_blue" />
+                <instance_material symbol="pupil" target="pntri_phong_blue" />
+                <instance_material symbol="beak"  target="pntri_phong_orange" />
+                <instance_material symbol="body"  target="pntri_phong_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node layer="wireframe">
+          <instance_geometry url="#rubberducky">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="pntri_wireframe_light_blue" />
+                <instance_material symbol="pupil" target="pntri_wireframe_blue" />
+                <instance_material symbol="beak"  target="pntri_wireframe_orange" />
+                <instance_material symbol="body"  target="pntri_wireframe_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node layer="cm">
+          <instance_geometry url="#rubberducky_lines">
+            <bind_material>
+                <technique_common>
+                <instance_material symbol="eye"   target="material_cm_light_blue" />
+                <instance_material symbol="pupil" target="material_cm_blue" />
+                <instance_material symbol="beak"  target="material_cm_orange" />
+                <instance_material symbol="body"  target="material_cm_yellow" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+
+      </node>
+    </node>
+  </library_nodes>
+
+  <library_visual_scenes>
+
+    <visual_scene id="Solid">
+      <node>
+        <instance_node url="#app_camera_node"/>
+        <instance_node url="#geometry_node"/>
+        <node id="light_node_a"><instance_light url="#my_light" /></node>
+      </node>
+
+      <evaluate_scene>
+        <render camera_node="#app_camera_node">
+          <layer>solid</layer>
+          <layer>ducks</layer>
+        </render>
+        <extra>
+          <technique profile="scene">
+            <light_node index="0" ref="#light_node_a" />
+          </technique>
+        </extra>
+      </evaluate_scene>
+    </visual_scene>
+
+    <!-- Wireframe scene -->
+    <visual_scene id="Wireframe">
+      <node>
+        <instance_node url="#app_camera_node"/>
+        <instance_node url="#geometry_node"/>
+        <node id="light_node_b">
+          <instance_light url="#my_light" />
+        </node>
+      </node>
+
+      <evaluate_scene>
+        <render camera_node="#app_camera_node">
+          <layer>cm</layer>
+          <layer>wireframe</layer>
+          <layer>ducks</layer>
+        </render>
+        <extra>
+          <technique profile="scene">
+            <light_node index="0" ref="#light_node_b" />
+          </technique>
+        </extra>
+      </evaluate_scene>
+    </visual_scene>
+
+
+  </library_visual_scenes>
+
+</COLLADA>

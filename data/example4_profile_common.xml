@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<COLLADA>
+  <asset>
+    <created>2011-04-12T13:23:22Z</created>
+    <modified>2011-04-12T13:23:22Z</modified>
+  </asset>
+
+  <library_geometries>
+
+    <geometry id="shaded_cube">
+      <mesh>
+        <!-- Vertex sources must match up for all vertices, i.e., vertex i has
+             position i and texcoord i. Collada can handle multiple index sets,
+             but scene has no support for it as OpenGL doesn't support it. -->
+
+        <source id="positions">
+          <float_array id="positions_array" count="108">
+            -1.0  1.0 -1.0    1.0  1.0 -1.0    1.0 -1.0 -1.0
+            1.0 -1.0 -1.0   -1.0 -1.0 -1.0   -1.0  1.0 -1.0
+            -1.0  1.0  1.0    1.0 -1.0  1.0    1.0  1.0  1.0
+            1.0 -1.0  1.0   -1.0  1.0  1.0   -1.0 -1.0  1.0
+            1.0  1.0 -1.0    1.0  1.0  1.0    1.0 -1.0  1.0
+            1.0 -1.0  1.0    1.0 -1.0 -1.0    1.0  1.0 -1.0
+            -1.0  1.0 -1.0   -1.0 -1.0  1.0   -1.0  1.0  1.0
+            -1.0 -1.0  1.0   -1.0  1.0 -1.0   -1.0 -1.0 -1.0
+            -1.0  1.0 -1.0   -1.0  1.0  1.0    1.0  1.0  1.0
+            1.0  1.0  1.0    1.0  1.0 -1.0   -1.0  1.0 -1.0
+            -1.0 -1.0 -1.0    1.0 -1.0  1.0   -1.0 -1.0  1.0
+            1.0 -1.0  1.0   -1.0 -1.0 -1.0    1.0 -1.0 -1.0
+          </float_array>
+          <technique_common>
+            <accessor source="#positions_array" count="36">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <source id="normals">
+          <float_array id="normals_array" count="108">
+            0.0  0.0 -1.0    0.0  0.0 -1.0    0.0  0.0 -1.0
+            0.0  0.0 -1.0    0.0  0.0 -1.0    0.0  0.0 -1.0
+            0.0  0.0  1.0    0.0  0.0  1.0    0.0  0.0  1.0
+            0.0  0.0  1.0    0.0  0.0  1.0    0.0  0.0  1.0
+            1.0  0.0  0.0    1.0  0.0  0.0    1.0  0.0  0.0
+            1.0  0.0  0.0    1.0  0.0  0.0    1.0  0.0  0.0
+            -1.0  0.0  0.0   -1.0  0.0  0.0   -1.0  0.0  0.0
+            -1.0  0.0  0.0   -1.0  0.0  0.0   -1.0  0.0  0.0
+            0.0  1.0  0.0    0.0  1.0  0.0    0.0  1.0  0.0
+            0.0  1.0  0.0    0.0  1.0  0.0    0.0  1.0  0.0
+            0.0 -1.0  0.0    0.0 -1.0  0.0    0.0 -1.0  0.0
+            0.0 -1.0  0.0    0.0 -1.0  0.0    0.0 -1.0  0.0
+          </float_array>
+          <technique_common>
+            <accessor source="normals_array" count="36">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+
+        <vertices id="geometry_vertices">
+          <input semantic="NORMAL" source="#normals"/>
+          <input semantic="POSITION" source="#positions"/>
+        </vertices>
+        <triangles count="12" material="default" />
+      </mesh>
+    </geometry>
+
+  </library_geometries>
+
+  <library_effects>
+
+    <effect id="effect_shaded">
+       <profile_COMMON>
+        <newparam sid="diffuse"><float4> 0.2 0.56 0.35 1.0</float4></newparam>
+        <technique sid="phong1">
+          <phong>
+            <emission><color>0.0 0.0 0.0 1.0</color></emission>
+            <ambient><color>0.0 0.0 0.0 1.0</color></ambient>
+            <diffuse><param ref="diffuse"/></diffuse>
+            <specular><color>1.0 1.0 1.0 1.0</color></specular>
+            <shininess><float>50.0</float></shininess>
+            <reflective><color>1.0 1.0 1.0 1.0</color></reflective>
+            <reflectivity><float>0.051</float></reflectivity>
+            <transparent><color>0.0 0.0 0.0 1.0</color></transparent>
+            <transparency><float>1.0</float></transparency>
+          </phong>
+        </technique>
+      </profile_COMMON>
+
+    </effect>
+
+  </library_effects>
+
+  <library_materials>
+    <material id="material_shaded">
+      <instance_effect url="#effect_shaded" />
+    </material>
+  </library_materials>
+
+  <library_lights>
+
+    <!-- Here we define a point light. The position of the light is given when
+         when we instantiate the light into the scene graph -->
+    <light id="my_light">
+      <technique_common>
+        <point>
+          <!-- color is mandatory -->
+          <color>0.8 1 1</color>
+        </point>
+      </technique_common>
+    </light>
+
+  </library_lights>
+
+  <library_visual_scenes>
+    <visual_scene id="onscreen_example1">
+      <node id="root_node">
+        <instance_node url="#app_camera_node" />
+
+        <!-- And we instantiate the light source in the scene -->
+        <node id="light_node">
+          <instance_light url="#my_light" />
+        </node>
+
+        <node>
+          <instance_geometry url="#shaded_cube">
+            <bind_material>
+              <technique_common>
+                <instance_material symbol="default" target="material_shaded" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+      </node>
+      <evaluate_scene>
+        <render camera_node="#app_camera_node" />
+        <!-- This is an extension. We specify which light source (or actually
+             the node that contains the light source) that shall play the role
+             as light index x. Scene currently supports four active light sources -->
+        <extra>
+	  <technique profile="scene">
+	    <light_node index="0" ref="#light_node" />
+	  </technique>
+        </extra>
+      </evaluate_scene>
+    </visual_scene>
+
+  </library_visual_scenes>
+
+</COLLADA>

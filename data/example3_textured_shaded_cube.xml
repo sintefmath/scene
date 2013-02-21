@@ -1,0 +1,247 @@
+<?xml version="1.0"?>
+<COLLADA>
+  <asset>
+    <created>2011-04-12T13:23:22Z</created>
+    <modified>2011-04-12T13:23:22Z</modified>
+  </asset>
+
+  <library_images>
+
+    <!-- Here we define the image that we want to use for texturing -->
+    <image id="img_sinteflogo">
+      <init_from>
+        <ref>file://sinteflogo_258.png</ref>
+      </init_from>
+    </image>
+  </library_images>
+
+
+  <library_geometries>
+
+    <geometry id="shaded_cube">
+      <mesh>
+
+        <!-- In this example, we show how to do interleaved arrays. The following
+             float arrays contains position, normals and textures interleaved,
+             that is, the three first values are the position of vertex 0, the next
+             thee values are the normal of vertex 0, and the next two values
+             are the texcoords of vertex 0, the next three values are the position
+             of vertex 1, and so on. -->
+        <source id="positions">
+          <float_array id="positions_array" count="288">
+            -1.0  1.0 -1.0    0.0  0.0 -1.0    0.0  1.0
+             1.0  1.0 -1.0    0.0  0.0 -1.0    1.0  1.0
+             1.0 -1.0 -1.0    0.0  0.0 -1.0    1.0  0.0
+             1.0 -1.0 -1.0    0.0  0.0 -1.0    1.0  0.0
+            -1.0 -1.0 -1.0    0.0  0.0 -1.0    0.0  0.0
+            -1.0  1.0 -1.0    0.0  0.0 -1.0    0.0  1.0
+
+            -1.0  1.0  1.0    0.0  0.0  1.0    0.0  1.0
+             1.0 -1.0  1.0    0.0  0.0  1.0    1.0  0.0
+             1.0  1.0  1.0    0.0  0.0  1.0    1.0  1.0
+             1.0 -1.0  1.0    0.0  0.0  1.0    1.0  0.0
+            -1.0  1.0  1.0    0.0  0.0  1.0    0.0  1.0
+            -1.0 -1.0  1.0    0.0  0.0  1.0    0.0  0.0
+
+             1.0  1.0 -1.0    1.0  0.0  0.0    0.0  1.0
+             1.0  1.0  1.0    1.0  0.0  0.0    1.0  1.0
+             1.0 -1.0  1.0    1.0  0.0  0.0    1.0  0.0
+             1.0 -1.0  1.0    1.0  0.0  0.0    1.0  0.0
+             1.0 -1.0 -1.0    1.0  0.0  0.0    0.0  0.0
+             1.0  1.0 -1.0    1.0  0.0  0.0    0.0  1.0
+
+            -1.0  1.0 -1.0   -1.0  0.0  0.0    0.0  1.0
+            -1.0 -1.0  1.0   -1.0  0.0  0.0    1.0  0.0
+            -1.0  1.0  1.0   -1.0  0.0  0.0    1.0  1.0
+            -1.0 -1.0  1.0   -1.0  0.0  0.0    1.0  0.0
+            -1.0  1.0 -1.0   -1.0  0.0  0.0    0.0  1.0
+            -1.0 -1.0 -1.0   -1.0  0.0  0.0    0.0  0.0
+
+            -1.0  1.0 -1.0    0.0  1.0  0.0    0.0  1.0
+            -1.0  1.0  1.0    0.0  1.0  0.0    1.0  1.0
+             1.0  1.0  1.0    0.0  1.0  0.0    1.0  0.0
+             1.0  1.0  1.0    0.0  1.0  0.0    1.0  0.0
+             1.0  1.0 -1.0    0.0  1.0  0.0    0.0  0.0
+            -1.0  1.0 -1.0    0.0  1.0  0.0    0.0  1.0
+
+            -1.0 -1.0 -1.0    0.0 -1.0  0.0    0.0  1.0
+             1.0 -1.0  1.0    0.0 -1.0  0.0    1.0  0.0
+            -1.0 -1.0  1.0    0.0 -1.0  0.0    1.0  1.0
+             1.0 -1.0  1.0    0.0 -1.0  0.0    1.0  0.0
+            -1.0 -1.0 -1.0    0.0 -1.0  0.0    0.0  1.0
+             1.0 -1.0 -1.0    0.0 -1.0  0.0    0.0  0.0
+          </float_array>
+          <technique_common>
+            <!-- Since the data layout isn't tightly packed positions, we specify
+                 offset and stride -->
+            <accessor source="#positions_array" count="36" offset="0" stride="8">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <!-- Notice that this source doesn't have a float array, but references
+             into the float array of the position source -->
+        <source id="normals">
+          <technique_common>
+            <accessor source="#positions_array" count="36" offset="3" stride="8">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <!-- Here as well -->
+        <source id="texcoords">
+          <technique_common>
+            <accessor source="#positions_array" count="36" offset="6" stride="8">
+              <param name="U" type="float"/>
+              <param name="V" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <vertices id="geometry_vertices">
+          <input semantic="NORMAL" source="#normals"/>
+          <input semantic="POSITION" source="#positions"/>
+          <input semantic="TEXCOORD" source="#texcoords"/>
+        </vertices>
+        <triangles count="12" material="default" />
+      </mesh>
+    </geometry>
+
+  </library_geometries>
+
+  <library_effects>
+
+    <effect id="effect_shaded">
+      <newparam sid="mvp"><semantic>MODELVIEW_PROJECTION_MATRIX</semantic><float4x4>0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3</float4x4></newparam>
+      <newparam sid="nm"><semantic>NORMAL_MATRIX</semantic><float3x3>1 0 0 0 1 0 0 0 1</float3x3></newparam>
+      <newparam sid="light_z"><semantic>LIGHT0_Z_WORLD</semantic><float3>0 0 0</float3></newparam>
+
+      <!-- Here we define the sampler that should be used -->
+      <newparam sid="mytex">
+        <sampler2D>
+          <instance_image url="img_sinteflogo" />
+          <minfilter>LINEAR</minfilter>
+          <mipfilter>LINEAR</mipfilter>
+        </sampler2D>
+      </newparam>
+
+      <profile_GLSL>
+        <technique sid="default">
+          <pass>
+            <states>
+              <depth_test_enable value="TRUE" />
+            </states>
+            <program>
+              <!-- The vertex shader -->
+              <shader stage="VERTEX">
+                <sources>
+                  <inline>
+uniform mat4 MVP;
+uniform mat3 NM;
+attribute vec3 position;
+attribute vec3 normal;
+attribute vec2 texcoord;
+varying vec3 fs_normal;
+varying vec2 fs_texcoord;
+void
+main()
+{
+    fs_texcoord = texcoord;
+    fs_normal = NM * normal;
+    gl_Position = MVP * vec4( position, 1.0 );
+}
+                  </inline>
+                </sources>
+              </shader>
+              <!-- The fragment shader -->
+              <shader stage="FRAGMENT">
+                <sources>
+                  <inline>
+varying vec3 fs_normal;
+varying vec2 fs_texcoord;
+uniform vec3 light_z;
+uniform sampler2D my_tex;
+void
+main()
+{
+    gl_FragColor = vec4( texture2D( my_tex, fs_texcoord ).rgb*max(0.1, dot( fs_normal, light_z ) ), 1.0 );
+}
+                  </inline>
+                </sources>
+              </shader>
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <bind_attribute symbol="normal"><semantic>NORMAL</semantic></bind_attribute>
+              <bind_attribute symbol="texcoord"><semantic>TEXCOORD</semantic></bind_attribute>
+              <bind_uniform symbol="MVP"><param ref="mvp" /></bind_uniform>
+              <bind_uniform symbol="NM"><param ref="nm" /></bind_uniform>
+              <bind_uniform symbol="light_z"><param ref="light_z"/></bind_uniform>
+              <bind_uniform symbol="my_tex"><param ref="mytex" /></bind_uniform>
+            </program>
+          </pass>
+        </technique>
+      </profile_GLSL>
+    </effect>
+
+  </library_effects>
+
+  <library_materials>
+    <material id="material_shaded">
+      <instance_effect url="#effect_shaded" />
+    </material>
+  </library_materials>
+
+  <library_lights>
+
+    <!-- Here we define a point light. The position of the light is given when
+         when we instantiate the light into the scene graph -->
+    <light id="my_light">
+      <technique_common>
+        <point>
+          <!-- color is mandatory -->
+          <color>0.8 1 1</color>
+        </point>
+      </technique_common>
+    </light>
+
+  </library_lights>
+
+  <library_visual_scenes>
+    <visual_scene id="onscreen_example1">
+      <node id="root_node">
+        <instance_node url="#app_camera_node" />
+
+        <!-- And we instantiate the light source in the scene -->
+        <node id="light_node">
+          <instance_light url="#my_light" />
+        </node>
+
+        <node>
+          <instance_geometry url="#shaded_cube">
+            <bind_material>
+              <technique_common>
+                <instance_material symbol="default" target="material_shaded" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+      </node>
+      <evaluate_scene>
+        <render camera_node="#app_camera_node" />
+        <!-- This is an extension. We specify which light source (or actually
+             the node that contains the light source) that shall play the role
+             as light index x. Scene currently supports four active light sources -->
+        <extra>
+          <light_node index="0" ref="#light_node" />
+        </extra>
+      </evaluate_scene>
+    </visual_scene>
+
+  </library_visual_scenes>
+
+</COLLADA>

@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<COLLADA>
+  <asset>
+    <created>2006-06-21T21:23:22Z</created>
+    <modified>2006-06-21T21:23:22Z</modified>
+  </asset>
+  <library_lights>
+    <asset>
+      <created>2011-01-02T01:02:03Z</created>
+      <modified>2011-01-02T01:02:04Z</modified>
+    </asset>
+    <light id="light_ambient">
+      <technique_common>
+	<ambient>
+	  <color>1 0.5 0.9</color>
+	</ambient>
+      </technique_common>
+    </light>
+
+    <light id="light_directional">
+      <asset>
+	<created>2011-01-02T05:06:07Z</created>
+	<modified>2011-01-02T08:09:00Z</modified>
+      </asset>
+      <technique_common>
+	<directional>
+	  <color>1 0.5 0.9</color>
+	</directional>
+      </technique_common>
+    </light>
+
+    <light id="light_point_default">
+      <technique_common>
+	<point>
+	  <color>1 0.5 0.9</color>
+	</point>
+      </technique_common>
+    </light>
+
+    <light id="light_point_specified">
+      <technique_common>
+	<point>
+	  <color>1 0.5 0.9</color>
+	  <constant_attenuation sid="constant">0.1</constant_attenuation>
+	  <linear_attenuation sid="linear">0.2</linear_attenuation>
+	  <quadratic_attenuation sid="quadratic">0.3</quadratic_attenuation>
+	</point>
+      </technique_common>
+    </light>
+
+    <light id="light_spot_default">
+      <technique_common>
+	<spot>
+	  <color>1 0.5 0.9</color>
+	</spot>
+      </technique_common>
+    </light>
+
+    <light id="light_spot_specified">
+      <technique_common>
+	<spot>
+	  <color>1 0.5 0.9</color>
+	  <constant_attenuation sid="constant">0.1</constant_attenuation>
+	  <linear_attenuation sid="linear">0.2</linear_attenuation>
+	  <quadratic_attenuation sid="quadratic">0.3</quadratic_attenuation>
+	  <falloff_angle sid="falloff_angle">0.4</falloff_angle>
+	  <falloff_exponent sid="falloff_exponent">0.5</falloff_exponent>
+	</spot>
+      </technique_common>
+    </light>
+
+
+  </library_lights>
+</COLLADA>

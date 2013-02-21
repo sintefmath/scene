@@ -1,0 +1,220 @@
+<?xml version="1.0"?>
+<COLLADA>
+  <!-- COLLADA requires that the first tag is an asset tag. Asset tags are used
+       to keep track on what is from where. Most tags in a COLLADA doc can have
+       its own asset tag. -->
+  <asset>
+    <created>2011-04-12T13:23:22Z</created>
+    <modified>2011-04-12T13:23:22Z</modified>
+  </asset>
+
+  <!-- First, we define a geometry -->
+  <library_geometries>
+    <geometry id="wirecube">
+      <!-- This geometry is of the mesh type, which is the only type Scene
+           supports ATM -->
+      <mesh>
+
+        <!-- Define vertex sources, this corresponds to a buffer object in GL -->
+        <source id="wirecube_positions">
+          <!-- The cube has eight corners, so we need 3*8=24 floats to specify them -->
+          <float_array id="wirecube_positions_array" count="24">
+            -1.0  1.0  1.0
+             1.0  1.0  1.0
+            -1.0 -1.0  1.0
+             1.0 -1.0  1.0
+            -1.0  1.0 -1.0
+             1.0  1.0 -1.0
+            -1.0 -1.0 -1.0
+             1.0 -1.0 -1.0
+          </float_array>
+          <!-- Then we tell COLLADA how the data in the float buffer is laid out -->
+          <technique_common>
+            <!-- An accessor roughly corresponds to the data one passes to
+                 glAttribPointer -->
+            <!-- The accessor has three param children, which implies 3D points. The
+                 name attribute is optional, but it is nice to have for GUI's etc. -->
+            <!-- We have eight 3D vertices, so count is 8. -->
+            <accessor source="#wirecube_positions_array" count="8">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <!-- The next step is to tell COLLADA how to merge the sources into a
+             vertex stream. This corresponds to how one builds a vertex array
+             object in GL -->
+        <vertices>
+          <!-- The semantic tag is used to match sources (attributes) to the
+               attributes in the shader program. See Scene.hpp for available
+               vertex semantics. -->
+          <input semantic="POSITION" source="#wirecube_positions" />
+        </vertices>
+
+        <!-- The first geometry is a set of points. We draw all of them without
+             any indexing. -->
+        <!-- The material attribute is a tag which be bind to a particular
+             material down in the visual_scene. -->
+        <points count="8" material="point_material" />
+
+        <!-- Then twelve lines. These are indexed, and the indices are inside
+             the p-tag -->
+        <lines count="12" material="line_material">
+          <p>0 1
+             1 3
+             3 2
+             2 0
+             4 5
+             5 7
+             7 6
+             6 4
+             0 4
+             1 5
+             2 6
+             3 7
+          </p>
+
+        </lines>
+
+      </mesh>
+    </geometry>
+  </library_geometries>
+
+  <!-- We then define a shader that we can use. Shaders + miscellanoues state is
+       put into what is called 'effects'. Effects can be instantiated by materials
+       and have its parameters tweaked by parameters. -->
+  <library_effects>
+
+    <!-- This is a simple effect that transforms vertices and paints them using
+         a single color. -->
+    <effect id="effect_solid">
+      <!-- Parameters are attributes that can be manipulated by the outside. -->
+      <!-- Parameters that have a semantic are manipulated by the runtime system
+           (in this case, the runtime system provides the current modelview-
+           projection matrix -->
+      <!-- Parameters must always have a default value (here a 4x4 unit matrix),
+           which give the type of the parameter. -->
+      <!-- sid means 'scoped identifier', which must be unique within the parent
+           scope. Sids are used to reference where we know the scope -->
+      <newparam sid="mvp"><semantic>MODELVIEW_PROJECTION_MATRIX</semantic><float4x4>0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3</float4x4></newparam>
+      <!-- This parameter can be tweaked by the material -->
+      <newparam sid="color"><float3>1 1 1</float3></newparam>
+
+      <!-- An effect has a set of profiles, where each profile describes how
+           this effect is applied on a particular architecture. The interesting
+           profiles are profile_GLSL (desktop rendering), profile_GLES (android),
+           and profile_GLES2 (WebGL). -->
+      <profile_GLSL>
+        <!-- A technique is a variant of an effect on a particular profile. Here,
+             we only use a single technique. -->
+        <technique sid="default">
+          <!-- A technique consists of one or more rendering passes, here we have
+               a single pass -->
+          <pass>
+            <!-- This is the OpenGL state we want to use when rendering this pass,
+                 in this case we only want to turn on depth buffering and set
+                 the point size. -->
+            <states>
+              <depth_test_enable value="TRUE" />
+              <point_size value="5"/>
+            </states>
+            <!-- Then we describe the shader program to use in this rendering pass -->
+            <program>
+              <!-- The vertex shader -->
+              <shader stage="VERTEX">
+                <sources>
+                  <inline>
+uniform mat4 MVP;
+attribute vec3 position;
+void
+main()
+{
+    gl_Position = MVP * vec4( position, 1.0 );
+}
+                  </inline>
+                </sources>
+              </shader>
+              <!-- The fragment shader -->
+              <shader stage="FRAGMENT">
+                <sources>
+                  <inline>
+uniform vec3 color;
+void
+main()
+{
+    gl_FragColor = vec4( color, 1.0 );
+}
+                  </inline>
+                </sources>
+              </shader>
+              <!-- Specify the semantics of the vertex shader inputs. This is
+                   used to match up with the geometry vertex sources -->
+              <!-- Symbol is the symbol name in the shader source -->
+              <bind_attribute symbol="position"><semantic>POSITION</semantic></bind_attribute>
+              <!-- Bind uniform variables to parameters -->
+              <bind_uniform symbol="MVP"><param ref="mvp" /></bind_uniform>
+              <bind_uniform symbol="color"><param ref="color" /></bind_uniform>
+            </program>
+          </pass>
+        </technique>
+      </profile_GLSL>
+    </effect>
+
+  </library_effects>
+
+  <!-- Materials are instances of effects. We need at least one per effect to
+       use the effect. Here we make two, a white material and a red. -->
+  <library_materials>
+
+    <!-- The 'white' material. Since the default of color is white, we don't
+         need to tweak any parameters. -->
+    <material id="solid_white">
+      <instance_effect url="#effect_solid" />
+    </material>
+
+    <material id="solid_red">
+      <instance_effect url="#effect_solid">
+        <setparam ref="color"><float3>1 0 0</float3></setparam>
+      </instance_effect>
+    </material>
+
+  </library_materials>
+
+  <!-- Finally, we can bring everything together. A visual scene represents
+       a rendering -->
+
+  <!-- The viewer app of scene assumes that all visual scenes with an id beginning
+       with 'onscreen' can be used for onscreen rendering. -->
+  <library_visual_scenes>
+    <visual_scene id="onscreen_example1">
+      <!-- First part of the visual scene is the scene graph hierarcy which we
+           will use for rendering -->
+      <node>
+        <!-- The viewer app of scene automatically creates a node called
+             'app_camera_node' that contains the application camera. We must
+             include it so that Scene can deduce the relationship between the
+             camera and our geometry -->
+          <instance_geometry url="#wirecube">
+            <bind_material>
+              <technique_common>
+                <!-- Bind the material symbols defined in the geometry to actual
+                     materials -->
+                <instance_material symbol="point_material" target="solid_red" />
+                <instance_material symbol="line_material" target="solid_white" />
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+          <instance_node url="#app_camera_node" />
+        </node>
+      <!-- Then we specify how to render the scene. -->
+      <evaluate_scene>
+        <render camera_node="#app_camera_node" />
+      </evaluate_scene>
+
+    </visual_scene>
+
+  </library_visual_scenes>
+
+</COLLADA>
