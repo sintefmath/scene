@@ -23,6 +23,10 @@ Importer::parseCollada( xmlNodePtr collada_node )
 {
     Logger log = getLogger( "Scene.XML.Builder.parseCollada" );
 
+    Context context;
+    context.m_up_axis = Context::Y_UP;
+    context.m_unit = 1.f;
+
     if( !assertNode( collada_node, "COLLADA" ) ) {
         return false;
     }
@@ -35,14 +39,25 @@ Importer::parseCollada( xmlNodePtr collada_node )
     setlocale( LC_TIME, "C" );
 #endif
 
-
     bool success = true;
+
+    const std::string version_str = attribute( collada_node, "version" );
+    if( version_str == "1.4.0" ) {
+        context.m_version = Context::VERSION_1_4_X;
+    }
+    else if( version_str == "1.4.1" ) {
+        context.m_version = Context::VERSION_1_4_X;
+    }
+    else if( version_str == "1.5.0" ) {
+        context.m_version = Context::VERSION_1_5_0;
+    }
+    else {
+        SCENELOG_WARN( log, "Unrecognized version='" << version_str << "', assuming 1.4.1." );
+        context.m_version = Context::VERSION_1_4_X;
+    }
 
     xmlNodePtr n = collada_node->children;
 
-    Context context;
-    context.m_up_axis = Context::Y_UP;
-    context.m_unit = 1.f;
 
     Asset collada_asset = m_database.asset();
     if( checkNode( n, "asset" ) ) {

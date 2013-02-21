@@ -25,7 +25,7 @@ initLogger( int* argc, char** argv )
         LEVEL_DEBUG,
         LEVEL_TRACE
     };
-    DebugLevel level = LEVEL_ERROR;
+    DebugLevel level = LEVEL_WARN;
 
     std::list<std::string> confs;
 

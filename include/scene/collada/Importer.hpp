@@ -60,6 +60,10 @@ public:
 protected:
     struct Context {
         enum {
+            VERSION_1_4_X,  ///< We're parsing a COLLADA 1.4.0 or 1.4.1 file.
+            VERSION_1_5_0   ///< We're parsing a COLLADA 1.5.0 file.
+        }       m_version;
+        enum {
             X_UP,   ///< Right is neg y, up is pos x, in is pos z.
             Y_UP,   ///< Right is pos x, up is pos y, in is pos z.
             Z_UP    ///< Right is pos x, up is pos z, in is neg y.
