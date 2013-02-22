@@ -8,7 +8,7 @@ OPTION(SCENE_THREADS            "Use thread pools"     OFF )
 OPTION(SCENE_SSE4_2             "Enable use of SSE4.2 intrinsics" ON )
 OPTION(SCENE_PROFILING          "Enable profiling" OFF)
 OPTION(SCENE_CHECK_TYPES        "Enable run-time checks of types" OFF )
-OPTION(SCENE_RL_CHUNKS          "Use new renderlist chunking" OFF )
+OPTION(SCENE_RL_CHUNKS          "Use new renderlist chunking" ON )
 OPTION(SCENE_TINIA              "Build bridge against Tinia renderlists" OFF )
 IF(NOT WIN32)
     OPTION(SCENE_UNITTEST "Build unit tests" ON)
@@ -20,7 +20,8 @@ ENDIF()
 
 IF( EXTEND_CMAKE_MODULE_PATH )
   SET( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-    ${CMAKE_INSTALL_PREFIX}/share/cmake/Modules
+    "/work/projects/tinia/cmake/Modules"
+    "${CMAKE_INSTALL_PREFIX}/share/cmake/Modules"
     "./cmake/Modules"
     "~/cmake/Modules"
     "$ENV{HOMEPATH}/cmake/Modules"
@@ -139,7 +140,7 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(
     ${GLM_INCLUDE_DIR}
-    ${tinia_INCLUDE_DIR}
+    ${TINIA_INCLUDE_DIR}
     ${LIBXML2_INCLUDE_DIR}
     ${GLEW_INCLUDE_DIR}
     ${Freeglut_INCLUDE_DIR}
@@ -225,6 +226,7 @@ TARGET_LINK_LIBRARIES( viewer
                        scene_glsl
                        scene_collada
                        ${SCENE_TINIA_LIB}
+                       ${tinia_RenderList_LIBRARY}
                        ${PLATFORM_DEP_LIBS}
                        ${SIUT2_LIBRARY}
                        ${Freeglut_LIBRARY}
@@ -245,6 +247,7 @@ TARGET_LINK_LIBRARIES( filter
                        scene
                        scene_collada
                        ${SCENE_TINIA_LIB}
+                       ${tinia_RenderList_LIBRARY}
                        ${PLATFORM_DEP_LIBS}
                        ${LIBXML2_LIBRARIES}
                        ${LOG4CXX_LIBRARIES}
