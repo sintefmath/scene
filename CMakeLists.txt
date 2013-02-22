@@ -254,6 +254,38 @@ TARGET_LINK_LIBRARIES( filter
                        ${Boost_SYSTEM_LIBRARY}
                        ${PNG_LIBRARIES}
 )
+# --- Tinia viewer app --------------------------------------------------------
+IF(SCENE_TINIA)
+    FILE( GLOB APP_TINIA_VIEWER_HDR   "apps/tiniaviewer/job/*.hpp" )
+    FILE( GLOB APP_TINIA_VIEWER_SRC   "apps/tiniaviewer/job/*.cpp" )
+    SET( APP_TINIA_VIEWER_DESKTOP_SRC "apps/tiniaviewer/main_desktop.cpp" )
+    SET( APP_TINIA_VIEWER_CLOUD_SRC   "apps/tiniaviewer/main_cloud.cpp" )
+    SOURCE_GROUP( "app-tiniaviewer" FILES ${APP_TINIA_VIEWER_HDR}
+                                          ${APP_TINIA_VIEWER_SRC}
+                                          ${APP_TINIA_VIEWER_DESKTOP_SRC}
+                                          ${APP_TINIA_VIEWER_CLOUD_SRC} )
+    SET_SOURCE_FILES_PROPERTIES( ${APP_TINIA_VIEWER_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
+
+    ADD_EXECUTABLE( tinia_desktop_viewer ${APP_TINIA_VIEWER_HDR}
+                                         ${APP_TINIA_VIEWER_SRC}
+                                         ${APP_TINIA_VIEWER_DESKTOP_SRC} )
+    TARGET_LINK_LIBRARIES( tinia_desktop_viewer
+                           scene
+                           scene_glsl
+                           scene_collada
+                           ${SCENE_TINIA_LIB}
+                           ${tinia_RenderListGL_LIBRARY}
+                           ${tinia_RenderList_LIBRARY}
+                           ${tinia_jobcontroller_LIBRARY}
+                           ${tinia_model_LIBRARY}
+                           ${tinia_qtcontroller_LIBRARY}
+                           ${PLATFORM_DEP_LIBS}
+                           ${LIBXML2_LIBRARIES}
+                           ${LOG4CXX_LIBRARIES}
+                           ${Boost_SYSTEM_LIBRARY}
+                           ${PNG_LIBRARIES} )
+
+ENDIF(SCENE_TINIA)
 
 
 if( ${SCENE_UNITTEST} )
