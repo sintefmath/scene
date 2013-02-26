@@ -113,7 +113,7 @@ Importer::parseCollada( xmlNodePtr collada_node )
             }
         }
         else if( checkNode( n, "library_images" ) ) {
-            if(!parseLibraryImages( collada_asset, n ) ) {
+            if(!parseLibraryImages( context, collada_asset, n ) ) {
                 nagAboutParseError( log, n );
                 success = false;
             }

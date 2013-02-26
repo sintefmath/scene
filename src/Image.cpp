@@ -78,6 +78,11 @@ Image::initCube( GLenum iformat,
     if( !setFormat( iformat, format, type ) ) {
         return false;
     }
+    if( width < 1 ) {
+        SCENELOG_ERROR( log, "width < 1" );
+        return false;
+    }
+
     m_width = width;
     m_height = width;
     m_depth = width;
@@ -102,6 +107,14 @@ Image::init2D( GLenum iformat,
 {
     Logger log = getLogger( "Scene.Image.init2D" );
     if( !setFormat( iformat, format, type ) ) {
+        return false;
+    }
+    if( width < 1 ) {
+        SCENELOG_ERROR( log, "width < 1" );
+        return false;
+    }
+    if( height < 1 ) {
+        SCENELOG_ERROR( log, "heigth < 1" );
         return false;
     }
 
@@ -144,6 +157,18 @@ Image::init3D( GLenum iformat,
     if( !setFormat( iformat, format, type ) ) {
         return false;
     }
+    if( width < 1 ) {
+        SCENELOG_ERROR( log, "width < 1" );
+        return false;
+    }
+    if( height < 1 ) {
+        SCENELOG_ERROR( log, "heigth < 1" );
+        return false;
+    }
+    if( depth < 1 ) {
+        SCENELOG_ERROR( log, "depth < 1" );
+        return false;
+    }
     m_width = width;
     m_height = height;
     m_depth = depth;
@@ -166,7 +191,7 @@ Image::texelsInSlice()
         break;
     }
 
-	return 0; 
+    return 0;
 }
 
 const void*

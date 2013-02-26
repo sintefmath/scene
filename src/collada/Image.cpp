@@ -60,8 +60,8 @@ bool
 readPNG( GLenum& iformat,
          GLenum& format,
          GLenum& type,
-         size_t&  width,
-         size_t&  height,
+         unsigned int&  width,
+         unsigned int&  height,
          vector<unsigned char>& data,
          const std::vector<char>& content )
 {
@@ -140,6 +140,7 @@ readPNG( GLenum& iformat,
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     return true;
 }
+
 
 enum ChannelHint
 {
@@ -484,7 +485,7 @@ Importer::parseInitFrom( Image* image, xmlNodePtr init_from_node )
         else if( face_str == "POSITIVE_Z" ) {
             face = 4;
         }
-        else if( face_str == "NEGAWTIVE_Z" ) {
+        else if( face_str == "NEGATIVE_Z" ) {
             face = 5;
         }
         else {
@@ -570,7 +571,486 @@ Importer::parseInitFrom( Image* image, xmlNodePtr init_from_node )
 
 
 bool
-Importer::parseImage( const Asset& asset_parent,
+Importer::parseImage2( Context      context,
+                       const Asset& asset_parent,
+                       xmlNodePtr image_node )
+{
+    Logger log = getLogger( "Scene.XML.Importer.parseImage" );
+    if( !assertNode( image_node, "image" ) ) {
+        return false;
+    }
+
+    enum {
+        FILE_FORMAT_NONE,
+        FILE_FORMAT_PNG
+    }                       file_format = FILE_FORMAT_NONE;
+    ImageType               image_type = IMAGE_N;
+    std::string             id;
+    std::string             name;
+    std::string             src_url;
+    GLenum                  internal_format;
+    GLenum                  texel_format;
+    GLenum                  texel_type;
+    unsigned int            width = 0;
+    unsigned int            height = 0;
+    unsigned int            depth = 0;
+    bool                    auto_generate = true;
+    std::list<xmlNodePtr>   init_from;
+
+    vector<char>            file_contents;
+    vector<unsigned char>   data;
+
+
+    id = attribute( image_node, "id" );
+    if( id.empty() ) {
+        id = m_database.library<Image>().generateId();
+    }
+    name = attribute( image_node, "name" );
+    xmlNodePtr n = image_node->children;
+
+    Asset asset = asset_parent;
+    if( checkNode( n, "asset" ) ) {
+        if( !parseAsset( asset, n ) )  {
+            SCENELOG_ERROR( log, "Failed to parse <asset>" );
+            return false;
+        }
+        n = n->next;
+    }
+
+    if( context.m_version == Context::VERSION_1_4_X ) {
+        attribute( width, image_node, "width" );
+        attribute( height, image_node, "height" );
+        attribute( depth, image_node, "depth" );
+        std::string format = attribute( image_node, "format" );
+        if( !format.empty() ) {
+            if( format == "PNG" ) {
+                file_format = FILE_FORMAT_PNG;
+            }
+            else if( format == "png" ) {
+                file_format = FILE_FORMAT_PNG;
+            }
+            else {
+                SCENELOG_ERROR( log, "Unrecognized file format '" << format << '\'' );
+                return false;
+            }
+        }
+
+        if( checkNode( n, "data" ) ) {
+            SCENELOG_FATAL( log, "Unimplemented code path at " << __FILE__ << "@" << __LINE__ );
+            return false;
+        }
+        else if( checkNode( n, "init_from" ) ) {
+            xmlNodePtr m = n->children;
+            auto_generate = parseBool( attribute( m, "mips_generate"), true );
+
+            src_url = getBody( m );
+            if( src_url.empty() ) {
+                SCENELOG_ERROR( log, "Empty URL" );
+                return false;
+            }
+        }
+        else {
+            SCENELOG_ERROR( log, "Expected either image/data or image/init_from" );
+            return false;
+        }
+    }
+    else {
+
+    }
+
+    // read source file
+    if( !src_url.empty() ) {
+        if( src_url.length() > 4 && ( (src_url.substr(src_url.length()-4) == ".png")
+                                  || (src_url.substr(src_url.length()-4) == ".PNG") ) ) {
+            file_format = FILE_FORMAT_PNG;
+        }
+        else {
+            SCENELOG_ERROR( log, "Unrecognized suffix on file '" << src_url << '\'' );
+            return false;
+        }
+        if( !retrieveBinaryFile( file_contents, src_url ) ) {
+            SCENELOG_ERROR( log, "Failed to retrieve '" << src_url << '\'' );
+            return false;
+        }
+    }
+
+    // decode source file
+    if( !file_contents.empty() ) {
+        switch( file_format ) {
+        case FILE_FORMAT_PNG:
+            if( !readPNG( internal_format, texel_format, texel_type,
+                          width, height, data, file_contents ) )
+            {
+                SCENELOG_ERROR( log, "Error reading PNG file" );
+                return false;
+            }
+            image_type = IMAGE_2D;
+            break;
+        default:
+            SCENELOG_FATAL( log, "Should never happen " << __FILE__ << '@' << __LINE__ );
+            break;
+        }
+    }
+
+    Image* image = NULL;
+    switch( image_type ) {
+    case IMAGE_2D:
+        image = m_database.library<Image>().add( id );
+        if( image == NULL ) {
+            SCENELOG_ERROR( log, "Failed to create image '" << id << '\'' );
+            return false;
+        }
+        else {
+            if(!image->init2D( internal_format,
+                               texel_format,
+                               texel_type,
+                               (size_t)width,
+                               (size_t)height,
+                               1,
+                               auto_generate ? 0 : 1,
+                               auto_generate ) )
+            {
+                SCENELOG_ERROR( log, "Failed to initialize 2D image." );
+                m_database.library<Image>().remove( image );
+                return false;
+            }
+            image->set( 0, 0, data.data() );
+        }
+        break;
+
+    case IMAGE_3D:
+        image = m_database.library<Image>().add( id );
+        if( image == NULL ) {
+            SCENELOG_ERROR( log, "Failed to create image '" << id << '\'' );
+            return false;
+        }
+        else {
+
+        }
+        break;
+
+    case IMAGE_CUBE:
+        break;
+
+    default:
+        SCENELOG_FATAL( log, "Should never happen " << __FILE__ << '@' << __LINE__ );
+        return false;
+        break;
+    }
+
+/*
+ *    image->init2D( iformat,
+                   format,
+                   type,
+                   (size_t)width,
+                   (size_t)height,
+                   1,
+                   auto_generate ? 0 : 1,
+                   auto_generate );
+    image->set( 0, 0, &data[0] );
+*/
+
+    /*
+
+    // COLLADA doesn't require an ID attribute, but we do.
+
+    Image* image = m_database.library<Image>().add( id );
+    if( image == NULL ) {
+        SCENELOG_ERROR( log, "Error creating image '" << id << "'." );
+        return false;
+    }
+
+
+
+    Asset asset;
+    if( n!=NULL && xmlStrEqual( n->name, BAD_CAST "asset" ) ) {
+        if( !parseAsset( asset, n ) )  {
+            SCENELOG_ERROR( log, "Failed to parse <asset>" );
+            return false;
+        }
+    }
+    else {
+        asset = asset_parent;
+    }
+
+    if( n!=NULL && xmlStrEqual( n->name, BAD_CAST "renderable" ) ) {
+        //bool share = parseBool( attribute( n, "share"), false );
+    }
+
+    if( n==NULL ) {
+
+    }
+    else if( xmlStrEqual( n->name, BAD_CAST "init_from" ) ) {
+        xmlNodePtr m = n->children;
+
+        bool auto_generate = parseBool( attribute( m, "mips_generate"), true );
+
+        std::string URL;
+        if( checkNode( m->children, "ref" ) ) {
+            URL = getBody( m->children );
+        }
+        else if( checkNode( m->children, "hex" ) ) {
+            SCENELOG_ERROR( log, "init_from/hex not implemented");
+            return false;
+        }
+        else {
+            std::string body = getBody( m );
+            if( !body.empty() ) {
+                SCENELOG_WARN( log, "COLLADA 1.4-ism: no init_from/(ref|hex) child, assuming body is ref" );
+                URL = body;
+            }
+        }
+
+        // read file
+        vector<char> contents;
+        if( !retrieveBinaryFile( contents, URL ) ) {
+            SCENELOG_ERROR( log, "Failed to get '" << URL << '\'' );
+            return false;
+        }
+
+        if( URL.length() > 4 && URL.substr(URL.length()-4) == ".png" ) {
+            GLenum iformat, format, type;
+            size_t width, height;
+
+            std::vector<unsigned char> data;
+            if(readPNG( iformat, format, type, width, height, data, contents )) {
+                image->init2D( iformat,
+                               format,
+                               type,
+                               width,
+                               height,
+                               1,
+                               auto_generate ? 0 : 1,
+                               auto_generate );
+                image->set( 0, 0, &data[0] );
+            }
+            else {
+                SCENELOG_ERROR( log, "Failed to parse PNG  '" << URL << '\'' );
+            }
+        }
+        else {
+            SCENELOG_ERROR(log, "Unknown image suffix '" << URL << "'." );
+            return false;
+        }
+        n=n->next;
+    }
+    else if( xmlStrEqual( n->name, BAD_CAST "create_2d" ) ) {
+
+        GLenum iformat = GL_RGBA;
+        GLenum type = GL_UNSIGNED_BYTE;
+        GLenum format = GL_RGBA;
+        size_t width, height, mips, array_length=1;
+        bool auto_gen_mips;
+        bool use_ratio;
+        float ratio_width = 0.f;
+        float ratio_height = 0.f;
+
+        xmlNodePtr m = n->children;
+        if( checkNode( m, "size_exact" ) ) {
+            use_ratio = false;
+            if(!parseSize( &width, &height, NULL, m ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <size_exact>" );
+                return false;
+            }
+            m = m->next;
+        }
+        else if( checkNode( m, "size_ratio" ) ) {
+            use_ratio = true;
+            SCENELOG_FATAL( log, "Unimplemented code path @ " << __LINE__ );
+            return false;
+        }
+        else {
+            SCENELOG_ERROR( log, "Expected <size_exact> or <size_ratio>" );
+            return false;
+        }
+
+        if(!assertChild( n, m, "mips" ) ) {
+            return false;
+        }
+        if(!parseMips( mips, auto_gen_mips, m )) {
+            SCENELOG_ERROR( log, "Failed to parse <mips>" );
+            return false;
+        }
+        m = m->next;
+
+        if( checkNode( m, "unnormalized" ) ) {
+            SCENELOG_WARN( log, "<unnormalized> currently ignored." );
+            m = m->next;
+        }
+
+        if( checkNode( m, "array" ) ) {
+            if(!parseArray( array_length, m ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <array>" );
+                return false;
+            }
+            m = m->next;
+        }
+        if( checkNode( m, "format" ) ) {
+            if(!parseFormat( iformat, format, type, m ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <format>" );
+                return false;
+            }
+            m = m->next;
+        }
+
+
+        if( use_ratio ) {
+            image->init2D( iformat,
+                           format,
+                           type,
+                           ratio_width,
+                           ratio_height,
+                           array_length,
+                           mips,
+                           auto_gen_mips );
+        }
+        else {
+            image->init2D( iformat,
+                           format,
+                           type,
+                           width,
+                           height,
+                           array_length,
+                           mips,
+                           auto_gen_mips );
+        }
+        while( checkNode( m, "init_from" ) ) {
+            parseInitFrom( image, m );
+            m = m->next;
+        }
+        nagAboutRemainingNodes( log, m );
+
+        n=n->next;
+    }
+
+
+    else if( xmlStrEqual( n->name, BAD_CAST "create_cube" ) ) {
+        GLenum iformat = GL_RGBA;
+        GLenum type = GL_UNSIGNED_BYTE;
+        GLenum format = GL_RGBA;
+        size_t width, mips, array_length = 1;
+        bool auto_gen_mips;
+
+        xmlNodePtr m = n->children;
+        if(!assertChild( n, m, "size" ) ) {
+            return false;
+        }
+        if(!parseSize( &width, NULL, NULL, m ) ) {
+            SCENELOG_ERROR( log, "failed to parse <size>" );
+            return false;
+        }
+        m = m->next;
+
+        if(!assertChild( n, m, "mips" ) ) {
+            return false;
+        }
+        if(!parseMips( mips, auto_gen_mips, m )) {
+            SCENELOG_ERROR( log, "Failed to parse <mips>" );
+            return false;
+        }
+        m = m->next;
+
+        if( checkNode( m, "array" ) ) {
+            if(!parseArray( array_length, m ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <array>" );
+                return false;
+            }
+            m = m->next;
+        }
+        if( checkNode( m, "format" ) ) {
+            if(!parseFormat( iformat, format, type, m ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <format>" );
+                return false;
+            }
+            m = m->next;
+        }
+        nagAboutRemainingNodes( log, m );
+
+        if(! image->initCube( iformat,
+                              format,
+                              type,
+                              width,
+                              array_length,
+                              mips,
+                              auto_gen_mips ) )
+        {
+            SCENELOG_ERROR( log, "Failed to create image cube." );
+            return false;
+        }
+
+        while( checkNode( m, "init_from" ) ) {
+            parseInitFrom( image, m );
+            m = m->next;
+        }
+        nagAboutRemainingNodes( log, m );
+        n=n->next;
+    }
+    else if( xmlStrEqual( n->name, BAD_CAST "create_3d" ) ) {
+        size_t width, height, depth, mips, array_length=1;
+        bool auto_gen_mips;
+        GLenum iformat = GL_RGBA;
+        GLenum type = GL_UNSIGNED_BYTE;
+        GLenum format = GL_RGBA;
+
+
+        xmlNodePtr m = n->children;
+        if(!assertChild( n, m, "size" )) {
+            return false;
+        }
+        if(!parseSize( &width, &height, &depth, m ) ) {
+            SCENELOG_ERROR( log, "Failed to parse <size>." );
+            return false;
+        }
+        m = m->next;
+
+        if( !assertChild( n, m, "mips" ) ) {
+            return false;
+        }
+        if(!parseMips( mips, auto_gen_mips, m )) {
+            SCENELOG_ERROR( log, "Failed to parse <mips>" );
+            return false;
+        }
+        m = m->next;
+
+        if( checkNode( m, "array" ) ) {
+            if(!parseArray( array_length, m ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <array>" );
+                return false;
+            }
+            m = m->next;
+        }
+        if( checkNode( m, "format" ) ) {
+            if(!parseFormat( iformat, format, type, m ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <format>" );
+                return false;
+            }
+            m = m->next;
+        }
+
+        if(! image->init3D( iformat, format, type, width, height, depth, array_length, mips, auto_gen_mips ) ) {
+            SCENELOG_ERROR( log, "Failed to initialize texture 3D." );
+            return false;
+        }
+
+        while( checkNode( m, "init_from" ) ) {
+            parseInitFrom( image, m );
+            m = m->next;
+        }
+        nagAboutRemainingNodes( log, m );
+        n=n->next;
+    }
+
+    ignoreExtraNodes( log, n );
+    nagAboutRemainingNodes( log, n );
+    return true;
+*/
+    return true;
+}
+
+
+bool
+Importer::parseImage( Context      context,
+                      const Asset& asset_parent,
                       xmlNodePtr image_node )
 {
     Logger log = getLogger( "Scene.XML.Importer.parseImage" );
@@ -642,15 +1122,15 @@ Importer::parseImage( const Asset& asset_parent,
 
         if( URL.length() > 4 && URL.substr(URL.length()-4) == ".png" ) {
             GLenum iformat, format, type;
-            size_t width, height;
+            unsigned int width, height;
 
             std::vector<unsigned char> data;
             if(readPNG( iformat, format, type, width, height, data, contents )) {
                 image->init2D( iformat,
                                format,
                                type,
-                               width,
-                               height,
+                               (size_t)width,
+                               (size_t)height,
                                1,
                                auto_generate ? 0 : 1,
                                auto_generate );
