@@ -17,11 +17,11 @@
 #include <tinia/renderlist/SetShader.hpp>
 #include <tinia/renderlist/Draw.hpp>
 
+using std::unordered_map;
+namespace rl = tinia::renderlist;
+
 namespace Scene {
     namespace Tinia {
-        using std::unordered_map;
-
-        namespace rl = tinia::renderlist;
 
 static const std::string package = "Scene.Runtime.XMLRuntime";
 
