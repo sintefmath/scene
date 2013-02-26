@@ -467,23 +467,23 @@ Bridge::push()
 
 #else
     for( size_t i=0; i<m_renderlist.size(); i++ ) {
-        const RenderAction* action = m_renderlist[i];
+        const Runtime::RenderAction* action = m_renderlist[i];
 
         if( true || !m_last_update.asRecentAs( action->m_timestamp )  ) {
-            CacheKey<1> key( action );
+            Runtime::CacheKey<1> key( action );
             auto it = actions.find( key );
             if( it == actions.end() ) {
                 actions[ key ] = action;
                 // Make sure that assets are updated as well
                 // Iterate over all set_buffers and make sure that the clients
                 // gets updated source buffers
-                if( action->m_type == RenderAction::ACTION_SET_INPUTS ) {
+                if( action->m_type == Runtime::RenderAction::ACTION_SET_INPUTS ) {
                     for( size_t j=0; j<action->m_set_inputs.m_items.size(); j++ ) {
                         const SourceBuffer* buf = action->m_set_inputs.m_items[j].m_source;
                         if( (m_renderlist_db.itemByName( boost::lexical_cast<std::string>(buf) ) == NULL ) ||
                             (!m_last_update.asRecentAs( buf->valueChanged() ) ) )
                         {
-                            CacheKey<1> buf_key( buf );
+                            Runtime::CacheKey<1> buf_key( buf );
                             auto it = source_buffers.find( buf_key );
                             if( it == source_buffers.end() ) {
                                 source_buffers[ buf_key ] = buf;
@@ -492,12 +492,12 @@ Bridge::push()
                     }
                 }
                 // Make sure that client has updated buffer with index data
-                else if( action->m_type == RenderAction::ACTION_DRAW_INDEXED ) {
+                else if( action->m_type == Runtime::RenderAction::ACTION_DRAW_INDEXED ) {
                     const SourceBuffer* buf = action->m_draw_indexed.m_index_buffer;
                     if( (m_renderlist_db.itemByName( boost::lexical_cast<std::string>(buf) ) == NULL ) ||
                         (!m_last_update.asRecentAs( buf->valueChanged() ) ) )
                     {
-                        CacheKey<1> buf_key( buf );
+                        Runtime::CacheKey<1> buf_key( buf );
                         auto it = source_buffers.find( buf_key );
                         if( it == source_buffers.end() ) {
                             source_buffers[ buf_key ] = buf;
@@ -505,12 +505,12 @@ Bridge::push()
                     }
                 }
 
-                else if( action->m_type == RenderAction::ACTION_SET_PASS ) {
+                else if( action->m_type == Runtime::RenderAction::ACTION_SET_PASS ) {
                     const Pass* pass = action->m_set_pass.m_pass;
                     if( (m_renderlist_db.itemByName( boost::lexical_cast<std::string>(pass) ) == NULL ) ||
                         (!m_last_update.asRecentAs( pass->valueChanged() ) ) )
                     {
-                        CacheKey<1> shader_key( pass );
+                        Runtime::CacheKey<1> shader_key( pass );
                         auto it = shaders.find( shader_key );
                         if( it == shaders.end() ) {
                             shaders[ shader_key ] = pass;
@@ -518,11 +518,11 @@ Bridge::push()
                     }
                 }
 
-                else if( action->m_type == RenderAction::ACTION_SET_SAMPLERS ) {
+                else if( action->m_type == Runtime::RenderAction::ACTION_SET_SAMPLERS ) {
                     for( size_t j=0; j<action->m_set_samplers.m_items.size(); j++ ) {
                         const Image* image = action->m_set_samplers.m_items[j].m_image;
                         if( !m_last_update.asRecentAs( image->valueChanged() ) ) {
-                            CacheKey<1> image_key( image );
+                            Runtime::CacheKey<1> image_key( image );
                             auto it = images.find( image_key );
                             if( it == images.end() ) {
                                 images[ image_key ] = image;
@@ -531,11 +531,11 @@ Bridge::push()
                     }
                 }
 
-                else if( action->m_type == RenderAction::ACTION_SET_FRAMEBUFFER ) {
+                else if( action->m_type == Runtime::RenderAction::ACTION_SET_FRAMEBUFFER ) {
                     for( size_t j=0; j<action->m_set_render_targets.m_items.size(); j++ ) {
                         const Image* image = action->m_set_samplers.m_items[j].m_image;
                         if( !m_last_update.asRecentAs( image->valueChanged() ) ) {
-                            CacheKey<1> image_key( image );
+                            Runtime::CacheKey<1> image_key( image );
                             auto it = images.find( image_key );
                             if( it == images.end() ) {
                                 images[ image_key ] = image;
@@ -544,7 +544,7 @@ Bridge::push()
                     }
                 }
 
-                else if( action->m_type == RenderAction::ACTION_SET_VIEW_COORDSYS ) {
+                else if( action->m_type == Runtime::RenderAction::ACTION_SET_VIEW_COORDSYS ) {
                     // Tag matrices that are needed so they will be calculated
                     // when we do update
                     m_transform_cache.runtimeSemantic( RUNTIME_PROJECTION_MATRIX,
@@ -578,7 +578,7 @@ Bridge::push()
                     }
                 }
 
-                else if( action->m_type == RenderAction::ACTION_SET_LOCAL_COORDSYS ) {
+                else if( action->m_type == Runtime::RenderAction::ACTION_SET_LOCAL_COORDSYS ) {
                     // Tag matrices that are needed so they will be calculated
                     // when we do update
                     m_transform_cache.runtimeSemantic( RUNTIME_WORLD_FROM_OBJECT,
@@ -656,11 +656,11 @@ Bridge::push()
 
     // --- push actions
     for( auto it=actions.begin(); it!=actions.end(); ++it ) {
-        const RenderAction* sc_action = it->second;
+        const Runtime::RenderAction* sc_action = it->second;
         std::string id = boost::lexical_cast<std::string>( sc_action->m_serial_no );
 
         // --- SetViewCoordSys -------------------------------------------------
-        if( sc_action->m_type == RenderAction::ACTION_SET_VIEW_COORDSYS ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_VIEW_COORDSYS ) {
             rl::SetViewCoordSys* la = m_renderlist_db.castedItemByName<rl::SetViewCoordSys*>( id );
             if( la == NULL ) {
                 la = m_renderlist_db.createAction<rl::SetViewCoordSys>( id );
@@ -721,7 +721,7 @@ Bridge::push()
             }
         }
         // --- SetLocalCoordSys ------------------------------------------------
-        if( sc_action->m_type == RenderAction::ACTION_SET_LOCAL_COORDSYS ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_LOCAL_COORDSYS ) {
             rl::SetLocalCoordSys* rl_action = m_renderlist_db.castedItemByName<rl::SetLocalCoordSys*>( id );
             if( rl_action == NULL ) {
                 rl_action = m_renderlist_db.createAction<rl::SetLocalCoordSys>( id );
@@ -738,7 +738,7 @@ Bridge::push()
             SCENELOG_INFO( log, "setLocalCoordSys[" << id << "]" );
         }
         // --- SetShader -------------------------------------------------------
-        if( sc_action->m_type == RenderAction::ACTION_SET_PASS ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_PASS ) {
             rl::SetShader* rl_action = m_renderlist_db.castedItemByName<rl::SetShader*>( id );
             if( rl_action == NULL ) {
                 rl_action = m_renderlist_db.createAction<rl::SetShader>( id );
@@ -749,7 +749,7 @@ Bridge::push()
             SCENELOG_INFO( log, "setShader[" << id << "]" );
             SCENELOG_INFO( log, "+- shader = " << shader );
         }
-        if( sc_action->m_type == RenderAction::ACTION_SET_INPUTS ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_INPUTS ) {
             SCENELOG_INFO( log, "setInputs[" << id << "]" );
             rl::SetInputs* si = m_renderlist_db.castedItemByName<rl::SetInputs*>( id );
             if( si == NULL ) {
@@ -761,7 +761,7 @@ Bridge::push()
 
             si->clearInputs();
             for( size_t j=0; j<sc_action->m_set_inputs.m_items.size(); j++ ) {
-                const SetInputs::Item& m = sc_action->m_set_inputs.m_items[j];
+                const Runtime::SetInputs::Item& m = sc_action->m_set_inputs.m_items[j];
                 const std::string buf_id = boost::lexical_cast<std::string>( sc_action->m_set_inputs.m_items[j].m_source );
                 si->setInput( sc_action->m_set_inputs.m_pass->attributeSymbol(j),
                               buf_id,
@@ -774,10 +774,10 @@ Bridge::push()
             }
 
         }
-        if( sc_action->m_type == RenderAction::ACTION_SET_FRAMEBUFFER ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_FRAMEBUFFER ) {
             SCENELOG_INFO( log, "setFramebuffer[" << id << "]" );
         }
-        if( sc_action->m_type == RenderAction::ACTION_SET_UNIFORMS ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_UNIFORMS ) {
             SCENELOG_INFO( log, "setUniforms[" << id << "]" );
             rl::SetUniforms* su = m_renderlist_db.castedItemByName<rl::SetUniforms*>( id );
             if( su == NULL ) {
@@ -788,7 +788,7 @@ Bridge::push()
             su->setShader( sh_id );
             su->clear();
             for( size_t j=0; j<sc_action->m_set_uniforms.m_items.size(); j++ ) {
-                const SetUniforms::Item& m = sc_action->m_set_uniforms.m_items[j];
+                const Runtime::SetUniforms::Item& m = sc_action->m_set_uniforms.m_items[j];
 
                 const std::string& sym = sc_action->m_set_uniforms.m_pass->uniformSymbol(j);
                 if( m.m_semantic != RUNTIME_SEMANTIC_N ) {
@@ -865,19 +865,19 @@ Bridge::push()
             }
 
         }
-        if( sc_action->m_type == RenderAction::ACTION_SET_SAMPLERS ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_SAMPLERS ) {
             SCENELOG_INFO( log, "setSamplers[" << id << "]" );
         }
-        if( sc_action->m_type == RenderAction::ACTION_SET_FB_CTRL ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_FB_CTRL ) {
             SCENELOG_INFO( log, "setFBCtrl[" << id << "]" );
         }
-        if( sc_action->m_type == RenderAction::ACTION_SET_PIXEL_OPS ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_PIXEL_OPS ) {
             SCENELOG_INFO( log, "setPixelOps[" << id << "]" );
         }
-        if( sc_action->m_type == RenderAction::ACTION_SET_RASTER ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_SET_RASTER ) {
             SCENELOG_INFO( log, "setRaster[" << id << "]" );
         }
-        if( sc_action->m_type == RenderAction::ACTION_DRAW ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_DRAW ) {
             rl::Draw* rl_action = m_renderlist_db.castedItemByName<rl::Draw*>( id );
             if( rl_action == NULL ) {
                 rl_action = m_renderlist_db.createAction<rl::Draw>( id );
@@ -903,7 +903,7 @@ Bridge::push()
                            ", first=" << first <<
                            ", count=" << count );
         }
-        if( sc_action->m_type == RenderAction::ACTION_DRAW_INDEXED ) {
+        if( sc_action->m_type == Runtime::RenderAction::ACTION_DRAW_INDEXED ) {
 
             const std::string buffer = boost::lexical_cast<std::string>( sc_action->m_draw_indexed.m_index_buffer );
             rl::Buffer* rl_buffer = m_renderlist_db.castedItemByName<rl::Buffer*>( buffer );
@@ -957,11 +957,12 @@ Bridge::push()
     // --- update draw order
     m_renderlist_db.drawOrderClear();
     for( size_t i=0; i<m_renderlist.size(); i++ ) {
-        const RenderAction* action = m_renderlist[i];
+        const Runtime::RenderAction* action = m_renderlist[i];
         const std::string id = boost::lexical_cast<std::string>( action->m_serial_no );
         m_renderlist_db.drawOrderAdd( id );
     }
 #endif
+    m_renderlist_db.process( true );
 }
 
     } // of namespace Runtime
