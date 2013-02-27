@@ -28,7 +28,7 @@ TiniaViewerJob::TiniaViewerJob( const std::list<std::string>& files )
         0.f, 0.f, 0.f, 1.f
     };
 
-    const char* visual_scenes[] { "[none]" };
+    const char* visual_scenes[] = { "[none]" };
     const char* cameras[] = { "[none]" };
 
     // fetch data that is needed to populate the policy
@@ -260,7 +260,8 @@ TiniaViewerJob::readFiles()
         m_visual_scenes.push_back( vs->id() );
     }
     if( m_visual_scenes.empty() ) {
-        std::list<std::string> tmp = { "[none]" };
+        std::list<std::string> tmp;
+        tmp.push_back("[none]" );
         m_model->updateRestrictions( "visual_scenes", tmp.front(), tmp );
     }
     else {

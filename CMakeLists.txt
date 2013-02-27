@@ -283,17 +283,13 @@ IF(SCENE_TINIA)
                            scene_glsl
                            scene_collada
                            ${SCENE_TINIA_LIB}
-                           ${tinia_RenderListGL_LIBRARY}
-                           ${tinia_RenderList_LIBRARY}
-                           ${tinia_jobcontroller_LIBRARY}
-                           ${tinia_model_LIBRARY}
-                           ${tinia_qtcontroller_LIBRARY}
                            ${PLATFORM_DEP_LIBS}
                            ${LIBXML2_LIBRARIES}
                            ${LOG4CXX_LIBRARIES}
                            ${Boost_SYSTEM_LIBRARY}
+			   ${TINIA_LIBRARIES}
                            ${PNG_LIBRARIES} )
-
+MESSAGE("tinia libs: ${TINIA_LIBRARIES}")
 ENDIF(SCENE_TINIA)
 
 
