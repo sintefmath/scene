@@ -10,6 +10,9 @@ OPTION(SCENE_PROFILING          "Enable profiling" OFF)
 OPTION(SCENE_CHECK_TYPES        "Enable run-time checks of types" OFF )
 OPTION(SCENE_RL_CHUNKS          "Use new renderlist chunking" ON )
 OPTION(SCENE_TINIA              "Build bridge against Tinia renderlists" OFF )
+IF( SCENE_TINIA )
+    OPTION( SCENE_TINIA_SERVER  "Also build server tinia example applications" OFF )
+ENDIF( SCENE_TINIA )
 IF(NOT WIN32)
     OPTION(SCENE_UNITTEST "Build unit tests" ON)
     OPTION(SCENE_LOG4CXX  "Build against log4cxx logging framwork" ON)
@@ -24,27 +27,26 @@ IF( EXTEND_CMAKE_MODULE_PATH )
     "${CMAKE_INSTALL_PREFIX}/share/cmake/Modules"
     "./cmake/Modules"
     "~/cmake/Modules"
-    "$ENV{HOMEPATH}/cmake/Modules"
+#    "$ENV{HOMEPATH}/cmake/Modules"
     "../siut/cmakemacros"
     "../siut"
     "."
     "C:/cmake/Modules"
+    "C:/Dependencies/cmake/Modules"
     )
 ENDIF( EXTEND_CMAKE_MODULE_PATH )
 
-IF(WIN32)
-  SET(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "C:/scene_cxx_thirdparty/libxml2-2.7.7.win32/lib" )
-  FIND_PACKAGE( PNGWin32 REQUIRED )
-  FIND_PACKAGE( LibXml2Win32 REQUIRED )
-  FIND_PACKAGE( ZLIBWin32 REQUIRED )
-ELSE()
-  FIND_PACKAGE( PNG REQUIRED )
-  FIND_PACKAGE( LibXml2 REQUIRED )
-ENDIF()
+FIND_PACKAGE( PNG REQUIRED )
+FIND_PACKAGE( LibXml2 REQUIRED )
+
 
 IF(SCENE_TINIA)
     # For renderlist and renderlistgl
-    FIND_PACKAGE( Tinia REQUIRED COMPONENTS Server Desktop )
+    IF( SCENE_TINIA_SERVER )
+        FIND_PACKAGE( Tinia REQUIRED COMPONENTS Server Desktop )
+    ELSE( SCENE_TINIA_SERVER )
+        FIND_PACKAGE( Tinia REQUIRED COMPONENTS Desktop )
+    ENDIF( SCENE_TINIA_SERVER )
 ELSE()
     SET( tinia_INCLUDE_DIR )
 ENDIF()
@@ -65,11 +67,11 @@ FIND_PACKAGE( GLM REQUIRED )
 
 SET( PLATFORM_DEP_LIBS )
 IF(WIN32)
-  FIND_PACKAGE(ICONV)
+#  FIND_PACKAGE(ICONV)
   INCLUDE_DIRECTORIES(${ICONV_INCLUDE_DIR})
   SET(PLATFORM_DEP_LIBS ${PLATFORM_DEP_LIBS} ${ICONV_LIBRARY})
 
-  FIND_PACKAGE( ZLIBWin32 REQUIRED )
+#  FIND_PACKAGE( ZLIBWin32 REQUIRED )
   SET( PLATFORM_DEP_LIBS ${PLATFORM_DEP_LIBS} ${ZLIB_LIBRARY} )
 ELSE(WIN32)
     ADD_DEFINITIONS( -DUSE_POSIX )
@@ -89,20 +91,30 @@ ADD_DEFINITIONS( -DXYZZY )
 #
 # --- Set compiler flags
 #
+
+IF( SCENE_RL_CHUNKS )
+    ADD_DEFINITIONS( -DSCENE_RL_CHUNKS )
+ENDIF( SCENE_RL_CHUNKS )
+
+IF( SCENE_LOG4CXX )
+    ADD_DEFINITIONS( -DSCENE_LOG4CXX )
+ENDIF( SCENE_LOG4CXX )
+
+IF( SCENE_TINIA )
+    ADD_DEFINITIONS( -DSCENE_TINIA )
+ENDIF( SCENE_TINIA )
+
+IF( SCENE_CHECK_TYPES )
+    ADD_DEFINITIONS( -DSCENE_CHECK_TYPES )
+ENDIF()
+
+IF( SCENE_DEBUG )
+    ADD_DEFINITIONS( -DDEBUG )
+ENDIF()
+
+
 IF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
     SET( CMAKE_CXX_FLAGS "-Wall -fPIC -std=gnu++0x" )
-
-    IF(SCENE_LOG4CXX)
-        SET(CMAKE_CXX_FLAGS "-DSCENE_LOG4CXX ${CMAKE_CXX_FLAGS}" )
-    ENDIF()
-
-    IF(SCENE_RL_CHUNKS)
-        SET(CMAKE_CXX_FLAGS "-DSCENE_RL_CHUNKS ${CMAKE_CXX_FLAGS}" )
-    ENDIF()
-
-    IF(SCENE_TINIA)
-        SET(CMAKE_CXX_FLAGS "-DSCENE_TINIA ${CMAKE_CXX_FLAGS}" )
-    ENDIF()
 
     IF(SCENE_PROFILING)
         SET(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS}" )
@@ -110,14 +122,6 @@ IF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
 
     IF( SCENE_PROFILING OR SCENE_DEBUG )
         SET( CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}" )
-    ENDIF()
-
-    IF( SCENE_CHECK_TYPES )
-        SET( CMAKE_CXX_FLAGS "-DSCENE_CHECK_TYPES ${CMAKE_CXX_FLAGS}" )
-    ENDIF()
-
-    IF( SCENE_DEBUG )
-        ADD_DEFINITIONS( -DDEBUG )
     ENDIF()
 
     IF( SCENE_SSE4_2 )
@@ -129,12 +133,17 @@ IF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
     ENDIF()
 
     IF( SCENE_THREADS )
-        SET( CMAKE_CXX_FLAGS "-DSCENE_USE_THREADS ${CMAKE_CXX_FLAGS}" )
+        ADD_DEFINITIONS( -DSCENE_USE_THREADS )
     ENDIF()
 ENDIF()
 IF(MSVC10)
-        #Enable multiprocessor compilation for speed
-        SET(CMAKE_CXX_FLAGS " /MP ${CMAKE_CXX_FLAGS}" CACHE STRING " " FORCE)
+    #Enable multiprocessor compilation for speed
+    ADD_DEFINITIONS( /MP )
+
+    IF( SCENE_SSE4_2 )
+        ADD_DEFINITIONS( /arch:SSE4.2 )
+    ENDIF()
+
 ENDIF()
 
 
@@ -254,6 +263,34 @@ TARGET_LINK_LIBRARIES( filter
                        ${Boost_SYSTEM_LIBRARY}
                        ${PNG_LIBRARIES}
 )
+# --- Tinia viewer app --------------------------------------------------------
+IF(SCENE_TINIA)
+    FILE( GLOB APP_TINIA_VIEWER_HDR   "apps/tiniaviewer/job/*.hpp" )
+    FILE( GLOB APP_TINIA_VIEWER_SRC   "apps/tiniaviewer/job/*.cpp" )
+    SET( APP_TINIA_VIEWER_DESKTOP_SRC "apps/tiniaviewer/main_desktop.cpp" )
+    SET( APP_TINIA_VIEWER_CLOUD_SRC   "apps/tiniaviewer/main_cloud.cpp" )
+    SOURCE_GROUP( "app-tiniaviewer" FILES ${APP_TINIA_VIEWER_HDR}
+                                          ${APP_TINIA_VIEWER_SRC}
+                                          ${APP_TINIA_VIEWER_DESKTOP_SRC}
+                                          ${APP_TINIA_VIEWER_CLOUD_SRC} )
+    SET_SOURCE_FILES_PROPERTIES( ${APP_TINIA_VIEWER_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
+
+    ADD_EXECUTABLE( tinia_desktop_viewer ${APP_TINIA_VIEWER_HDR}
+                                         ${APP_TINIA_VIEWER_SRC}
+                                         ${APP_TINIA_VIEWER_DESKTOP_SRC} )
+    TARGET_LINK_LIBRARIES( tinia_desktop_viewer
+                           scene
+                           scene_glsl
+                           scene_collada
+                           ${SCENE_TINIA_LIB}
+                           ${PLATFORM_DEP_LIBS}
+                           ${LIBXML2_LIBRARIES}
+                           ${LOG4CXX_LIBRARIES}
+                           ${Boost_SYSTEM_LIBRARY}
+			   ${TINIA_LIBRARIES}
+                           ${PNG_LIBRARIES} )
+MESSAGE("tinia libs: ${TINIA_LIBRARIES}")
+ENDIF(SCENE_TINIA)
 
 
 if( ${SCENE_UNITTEST} )
