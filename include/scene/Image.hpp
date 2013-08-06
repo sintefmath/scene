@@ -31,15 +31,15 @@ public:
 
     /** Create a 2D image with size relative to viewport. */
     bool
-    init2D( GLenum iformat,
-            GLenum format,
-            GLenum type,
-            float  width,
-            float  height,
-            size_t array_length,
-            size_t mips,
-            bool   auto_generate );
-
+    init2DRelative( GLenum iformat,
+                    GLenum format,
+                    GLenum type,
+                    float  width,
+                    float  height,
+                    size_t array_length,
+                    size_t mips,
+                    bool   auto_generate );
+    
     /** Create a 2D image with exact size. */
     bool
     initCube( GLenum iformat,

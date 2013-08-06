@@ -34,8 +34,14 @@ public:
     const size_t
     techniques() const { return m_techniques.size(); }
 
+    Technique*
+    technique( const std::string& sid = "" );
+
     const Technique*
     technique( const std::string& sid = "" ) const;
+    
+    Technique*
+    technique( const size_t ix ) { return m_techniques[ix]; }
 
     const Technique*
     technique( const size_t ix ) const { return m_techniques[ix]; }

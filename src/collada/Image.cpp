@@ -1049,11 +1049,15 @@ Importer::parseImage2( Context      context,
 }
 
 
+
 bool
 Importer::parseImage( Context      context,
                       const Asset& asset_parent,
                       xmlNodePtr image_node )
 {
+    
+    
+    
     Logger log = getLogger( "Scene.XML.Importer.parseImage" );
     if( !assertNode( image_node, "image" ) ) {
         return false;
@@ -1208,7 +1212,7 @@ Importer::parseImage( Context      context,
 
 
         if( use_ratio ) {
-            image->init2D( iformat,
+            image->init2DRelative( iformat,
                            format,
                            type,
                            ratio_width,

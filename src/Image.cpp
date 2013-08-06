@@ -20,6 +20,22 @@ Image::Image( Library<Image>* library_images, const std::string& id )
       m_id( id ),
       m_type( IMAGE_N )
 {
+    static unsigned char dummy_image_2d[16*16*4];
+    static bool first = true;
+    if( first ) {
+        for(int j=0; j<16; j++) {
+            for(int i=0; i<16; i++ ) {
+                dummy_image_2d[4*(16*j+i)+0] = ((i+j)&1) ? 255 : 0;
+                dummy_image_2d[4*(16*j+i)+1] = ((i+j)&1) ? 255 : 0;
+                dummy_image_2d[4*(16*j+i)+2] = 255;
+                dummy_image_2d[4*(16*j+i)+3] = 255;
+            }
+        }
+        first = false;
+    }
+    // Add a dummy image to make sure that we are defined as something.
+    init2D( GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, 16, 16, 1, 0, false );
+    set( 0, 0, dummy_image_2d );
 }
 
 bool
@@ -127,7 +143,7 @@ Image::init2D( GLenum iformat,
 }
 
 bool
-Image::init2D( GLenum iformat,
+Image::init2DRelative( GLenum iformat,
                GLenum format,
                GLenum type,
                float  width,
