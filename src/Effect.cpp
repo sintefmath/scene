@@ -107,6 +107,7 @@ Effect::generate( ProfileType profile )
     }
 
     bool need_normal = false;
+    int texcoord_comps = 0;
     bool need_emission = false;
     bool need_ambient = false;
     bool need_diffuse = false;
@@ -160,39 +161,12 @@ Effect::generate( ProfileType profile )
         break;
     }
 
-
     Parameter par;
     par.set( "auto_MVP", RUNTIME_MODELVIEW_PROJECTION_MATRIX, Value::createFloat4x4() );
     dst_pro->addParameter( par );
     if( need_normal ) {
     }
 
-    // --- vertex shader
-    std::string vs_head;
-    std::string vs_body;
-
-    vs_head += "uniform mat4 MVP;\n";
-    vs_head += "attribute vec3 position;\n";
-    vs_body += "gl_Position = MVP * vec4( position, 1.0 );\n";
-    dst_pas->setUniform( "MVP", "auto_MVP" );
-    dst_pas->setAttribute( VERTEX_POSITION, "position" );
-    if( need_normal ) {
-        vs_head += "uniform mat3 NM;\n";
-        par.set( "auto_NM", RUNTIME_NORMAL_MATRIX, Value::createFloat3x3() );
-        dst_pro->addParameter( par );
-        dst_pas->setUniform( "NM", "auto_NM" );
-
-        vs_head += "attribute vec3 normal;\n";
-
-        vs_head += "varying vec3 es_normal;\n";
-        vs_body += "es_normal = NM * normal;\n";
-        dst_pas->setAttribute( VERTEX_NORMAL, "normal" );
-    }
-    dst_pas->setShaderSource( STAGE_VERTEX,
-                              vs_head +
-                              "void main() {" +
-                              vs_body +
-                              "}\n" );
 
     // --- fragment shader
     std::string fs_head;
@@ -238,15 +212,45 @@ Effect::generate( ProfileType profile )
     }
 
     if( need_diffuse ) {
-        fs_head += "uniform vec4 material_diffuse;\n";
-        if( sm->isComponentParameterReference( SHADING_COMP_DIFFUSE ) ) {
-            dst_pas->setUniform( "material_diffuse", sm->componentParameterReference( SHADING_COMP_DIFFUSE ) );
-        }
-        else if( sm->isComponentValue( SHADING_COMP_DIFFUSE ) ) {
-            dst_pas->setUniform( "material_diffuse", *(sm->componentValue( SHADING_COMP_DIFFUSE )) );
+        ShadingModelComponentType comp = SHADING_COMP_DIFFUSE;
+        std::string comp_str           = "diffuse";
+        
+        if( sm->isComponentImageReference( comp ) ) {
+            std::string ref = sm->componentImageReference( comp );
+            const Parameter* param = m_profile_common->parameter( ref );
+            if( param == NULL ) {
+                SCENELOG_ERROR( log, "Unable to find a parameter reference '" << ref << "'." ); 
+            }
+            else {
+                const Value* value = param->value();
+                if( value == NULL ) {
+                    SCENELOG_FATAL( log, "Got NULL pointer!" );
+                    fs_body += "vec4 material_"+comp_str+" = vec4( 1.f, 0.f, 0.f, 1.f );\n";
+                }
+                else if( value->type() == VALUE_TYPE_SAMPLER2D ) {
+                    texcoord_comps = std::max( texcoord_comps, 2 );
+                    
+                    fs_head += "uniform sampler2D texture_" + comp_str + ";\n";
+                    fs_body += "vec4 material_"+comp_str+" = texture2D( texture_"+comp_str+", fs_texcoord.xy );\n";
+                    
+                    dst_pas->setUniform( "material_"+comp_str, *value );
+                }
+                else {
+                    fs_body += "vec4 material_"+comp_str+" = vec4( 1.f, 0.f, 0.f, 1.f );\n";
+                }
+            }
         }
         else {
-            dst_pas->setUniform( "material_diffuse", Value::createFloat4( 0.8f, 0.8f, 1.f, 1.0 ) );
+            fs_head += "uniform vec4 material_diffuse;\n";
+            if( sm->isComponentParameterReference( SHADING_COMP_DIFFUSE ) ) {
+                dst_pas->setUniform( "material_diffuse", sm->componentParameterReference( SHADING_COMP_DIFFUSE ) );
+            }
+            else if( sm->isComponentValue( SHADING_COMP_DIFFUSE ) ) {
+                dst_pas->setUniform( "material_diffuse", *(sm->componentValue( SHADING_COMP_DIFFUSE )) );
+            }
+            else {
+                dst_pas->setUniform( "material_diffuse", Value::createFloat4( 0.8f, 0.8f, 1.f, 1.0 ) );
+            }
         }
         fs_body += "color += material_diffuse*max(0.0, dot( n, light_z ) );\n";
     }
@@ -285,6 +289,12 @@ Effect::generate( ProfileType profile )
         fs_body += "color += material_specular*s;\n";
     }
 
+    switch( texcoord_comps ) {
+    case 1: fs_head += "varying float fs_texcoord;\n"; break;
+    case 2: fs_head += "varying vec2 fs_texcoord;\n"; break;
+    case 3: fs_head += "varying vec3 fs_texcoord;\n"; break;
+    }
+    
     dst_pas->setShaderSource( STAGE_FRAGMENT,
                               fs_head +
                               "void main() {\n" +
@@ -294,6 +304,48 @@ Effect::generate( ProfileType profile )
                               "}\n" );
 
 
+
+    // --- vertex shader
+    std::string vs_head;
+    std::string vs_body;
+
+    vs_head += "uniform mat4 MVP;\n";
+    vs_head += "attribute vec3 position;\n";
+    vs_body += "gl_Position = MVP * vec4( position, 1.0 );\n";
+    dst_pas->setUniform( "MVP", "auto_MVP" );
+    dst_pas->setAttribute( VERTEX_POSITION, "position" );
+    if( need_normal ) {
+        vs_head += "uniform mat3 NM;\n";
+        par.set( "auto_NM", RUNTIME_NORMAL_MATRIX, Value::createFloat3x3() );
+        dst_pro->addParameter( par );
+        dst_pas->setUniform( "NM", "auto_NM" );
+
+        vs_head += "attribute vec3 normal;\n";
+
+        vs_head += "varying vec3 es_normal;\n";
+        vs_body += "es_normal = NM * normal;\n";
+        dst_pas->setAttribute( VERTEX_NORMAL, "normal" );
+    }
+    if( (texcoord_comps > 0) && (texcoord_comps < 4) ) {
+        std::string t;
+        switch( texcoord_comps ) {
+        case 1: t = "float"; break;
+        case 2: t = "vec2"; break;
+        case 3: t = "vec3"; break;
+        }
+        vs_head += "attribute " + t + " texcoord;\n";
+        vs_head += "varying " + t + " fs_texcoord;\n";
+        vs_body += "fs_texcoord = texcoord;\n";
+        dst_pas->setAttribute( VERTEX_TEXCOORD, "texcoord" );
+    }
+    
+    dst_pas->setShaderSource( STAGE_VERTEX,
+                              vs_head +
+                              "void main() {" +
+                              vs_body +
+                              "}\n" );
+    
+    
     dst_pas->addState( STATE_DEPTH_TEST_ENABLE, Value::createBool( true ) );
 
 }
@@ -391,6 +443,21 @@ Effect::profile( ProfileType type ) const
         return NULL;
     }
 }
+
+const Parameter*
+Effect::parameter( const std::string& sid ) const
+{
+    if( sid.empty() ) {
+        return NULL;
+    }
+    for( auto it=m_parameters.begin(); it!=m_parameters.end(); ++it ) {
+        if( (*it)->sid() == sid ) {
+            return *it;
+        }
+    }
+    return NULL;
+}
+
 
 
 } // of namespace Scene

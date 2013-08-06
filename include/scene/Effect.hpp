@@ -46,6 +46,9 @@ public:
 
     const Parameter*
     parameter( const size_t index ) const;
+    
+    const Parameter*
+    parameter( const std::string& sid ) const;
 
     const size_t
     parameters() const { return m_parameters.size(); }

@@ -111,6 +111,19 @@ Profile::addParameter( const Parameter& p )
     m_db.moveForward( *this );
 }
 
+const Parameter*
+Profile::parameter( const std::string& sid ) const
+{
+    if( sid.empty() ) {
+        return NULL;
+    }
+    for( auto it=m_parameters.begin(); it!=m_parameters.end(); ++it ) {
+        if( (*it)->sid() == sid ) {
+            return *it;
+        }
+    }
+    return m_effect->parameter( sid );
+}
 
 
 Technique*

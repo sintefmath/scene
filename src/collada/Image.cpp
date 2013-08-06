@@ -1,5 +1,6 @@
 #include <png.h>
 
+#include <list>
 #include <fstream>
 #include <cstring>
 #include "boost/random/mersenne_twister.hpp"
