@@ -130,12 +130,21 @@ Importer::parseNode( Node*           parent_node,
                         sid = "";
                     }
                 }
+                if( values[0]*values[0] + values[1]*values[1] + values[2]*values[2] < std::numeric_limits<float>::epsilon() ) {
+                    SCENELOG_WARN( log, "Degenerate rotation axis, using x-axis." );
+                    values[0] = 1.f;
+                    values[1] = 0.f;
+                    values[2] = 0.f;
+                } 
+                
+                
                 node->transformSetRotate( node->transformAdd( sid ),
                                           values[0],
                                           values[1],
                                           values[2],
                                           (M_PI/180.f)*values[3] );
-            }        }
+            }        
+        }
         // --- <scale> ---------------------------------------------------------
         else if( xmlStrEqual( n->name, BAD_CAST "scale" ) ) {
             string sid = attribute( n, "sid" );
