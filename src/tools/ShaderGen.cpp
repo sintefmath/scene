@@ -27,8 +27,9 @@ ShaderGenColor( Pass*         dst_pas,
         std::string ref = sm->componentImageReference( comp );
         const Parameter* param = profile_common->parameter( ref );
         if( param == NULL ) {
-            SCENELOG_ERROR( log, "Unable to find a parameter reference '" << ref << "'." ); 
-            return false;
+            SCENELOG_WARN( log, "Unable to find image reference '" << ref << "', using solid red instead." ); 
+            fs_body += "vec4 material_"+comp_str+" = vec4( 1.f, 0.f, 0.f, 1.f );\n";
+            return true;
         }
         else {
             const Value* value = param->value();
