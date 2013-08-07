@@ -10,6 +10,7 @@
 #include "scene/DataBase.hpp"
 #include "scene/Library.hpp"
 
+#include <sstream>
 
 namespace Scene {
 

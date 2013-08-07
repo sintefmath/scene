@@ -104,7 +104,9 @@ generateShaderFromCommon( Effect*             effect,
         effect->addParameter( *(profile_common->parameter(i)) );
     }
 
-    std::list<ProfileType> supported_profile_types = { PROFILE_GLES2, PROFILE_GLSL };
+    std::list<ProfileType> supported_profile_types;
+	supported_profile_types.push_back( PROFILE_GLES2 );
+	supported_profile_types.push_back( PROFILE_GLSL );
     //std::list<Profile*> target_profiles;
     for(auto it=supported_profile_types.begin(); it!=supported_profile_types.end(); ++it ) {
         if( (*it & profile_mask) != 0 ) {
