@@ -130,9 +130,9 @@ CommonShadingModel::setComponentImageReference( const ShadingModelComponentType 
     case SHADING_COMP_SPECULAR:
     case SHADING_COMP_REFLECTIVE:
     case SHADING_COMP_TRANSPARENT:
+    case SHADING_COMP_DIFFUSE:
         break;
 
-    case SHADING_COMP_DIFFUSE:
     case SHADING_COMP_SHININESS:
     case SHADING_COMP_REFLECTIVITY:
     case SHADING_COMP_TRANSPARENCY:

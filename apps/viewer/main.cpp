@@ -34,6 +34,7 @@
 #include <scene/glsl/GLSLRenderList.hpp>
 #include <scene/runtime/TransformCache.hpp>
 #include <scene/tools/BBoxTool.hpp>
+#include <scene/tools/ShaderGen.hpp>
 
 #ifdef SCENE_TINIA
 #include <scene/tinia/Bridge.hpp>
@@ -302,12 +303,18 @@ protected:
         }
 
         if( m_auto_shader ) {
+            Scene::Tools::generateShadersFromCommon( m_db,
+                                                     Scene::PROFILE_GLSL | 
+                                                     Scene::PROFILE_GLES2 );
+            
+/*
             for( size_t i=0; i<m_db.library<Scene::Effect>().size(); i++ ) {
                 Scene::Effect* e = m_db.library<Scene::Effect>().get( i );
                 std::cerr << "Generating GLSL and GLES2 profiles for '" << e->id() << '\'' << std::endl;
                 e->generate( Scene::PROFILE_GLSL );
                 e->generate( Scene::PROFILE_GLES2 );
             }
+*/
         }
         if( m_auto_flatten ) {
             for( size_t i=0; i<m_db.library<Scene::Geometry>().size(); i++ ) {

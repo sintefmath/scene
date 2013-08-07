@@ -34,8 +34,14 @@ public:
     const size_t
     techniques() const { return m_techniques.size(); }
 
+    Technique*
+    technique( const std::string& sid = "" );
+
     const Technique*
     technique( const std::string& sid = "" ) const;
+    
+    Technique*
+    technique( const size_t ix ) { return m_techniques[ix]; }
 
     const Technique*
     technique( const size_t ix ) const { return m_techniques[ix]; }
@@ -46,6 +52,9 @@ public:
     const Parameter*
     parameter(const size_t index ) const { return m_parameters[index]; }
 
+    const Parameter*
+    parameter( const std::string& sid ) const;
+    
     void
     addParameter( const Parameter& p );
 

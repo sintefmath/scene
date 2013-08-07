@@ -10,6 +10,7 @@
 #include "scene/DataBase.hpp"
 #include "scene/Library.hpp"
 
+#include <sstream>
 
 namespace Scene {
 
@@ -229,34 +230,61 @@ Library<T>::remove( T* pointer )
     m_database->moveForward( *this );
 }
 
+template<class T>
+const std::string
+Library<T>::generateId() const
+{
+    std::stringstream o;
+    for(size_t i=0; i<m_objects.size()+1; i++ ) {
+        o.str( m_autoid_prefix );
+        o << i;
+        const std::string str = o.str();
+        auto it = m_map.find( str );
+        if( it == m_map.end() ) {
+            return str;
+        }
+    }
+    Logger log = getLogger( m_instance_name + ".remove" );
+    SCENELOG_FATAL( log, "Failed to generate unique ID." );
+    return "error";
+}
 
 
 template class Library<Geometry>;
 template<> const std::string Library<Geometry>::m_instance_name = "Scene.Library<Geometry>";
+template<> const std::string Library<Geometry>::m_autoid_prefix = "geometry";
 
 template class Library<Image>;
 template<> const std::string Library<Image>::m_instance_name = "Scene.Library<Image>";
+template<> const std::string Library<Image>::m_autoid_prefix = "image";
 
 template class Library<Effect>;
 template<> const std::string Library<Effect>::m_instance_name = "Scene.Library<Effect>";
+template<> const std::string Library<Effect>::m_autoid_prefix = "effect";
 
 template class Library<Material>;
 template<> const std::string Library<Material>::m_instance_name = "Scene.Library<Material>";
+template<> const std::string Library<Material>::m_autoid_prefix = "material";
 
 template class Library<Camera>;
 template<> const std::string Library<Camera>::m_instance_name = "Scene.Library<Camera>";
+template<> const std::string Library<Camera>::m_autoid_prefix = "camera";
 
 template class Library<Light>;
 template<> const std::string Library<Light>::m_instance_name = "Scene.Library<Light>";
+template<> const std::string Library<Light>::m_autoid_prefix = "light";
 
 template class Library<Node>;
 template<> const std::string Library<Node>::m_instance_name = "Scene.Library<Node>";
+template<> const std::string Library<Node>::m_autoid_prefix = "node";
 
 template class Library<SourceBuffer>;
 template<> const std::string Library<SourceBuffer>::m_instance_name = "Scene.Library<SourceBuffer>";
+template<> const std::string Library<SourceBuffer>::m_autoid_prefix = "buffer";
 
 template class Library<VisualScene>;
 template<> const std::string Library<VisualScene>::m_instance_name = "Scene.Library<VisualScene>";
+template<> const std::string Library<VisualScene>::m_autoid_prefix = "visual_scene";
 
 
 } // of namespace Scene

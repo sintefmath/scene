@@ -57,6 +57,30 @@ Profile::key() const
 }
 
 
+Technique*
+Profile::createTechnique( const std::string sid )
+{
+    Logger log = getLogger( "Scene.Profile.createTechnique" );
+    if( sid.empty() ) {
+        SCENELOG_ERROR( log, "non-empty sid required." );
+        return NULL;
+    }
+    for(size_t i=0; i<m_techniques.size(); i++) {
+        if( m_techniques[i]->sid() == sid ) {
+            SCENELOG_ERROR( log, "Technique with sid='" << sid << "' already exists.");
+            return NULL;
+        }
+    }
+
+
+    Technique* technique = new Technique( m_db,
+                                          m_effect,
+                                          this,
+                                          sid );
+    m_techniques.push_back( technique );
+    return technique;
+}
+
 void
 Profile::deleteTechnique( const std::string& sid )
 {
@@ -71,6 +95,31 @@ Profile::deleteTechnique( const std::string& sid )
 
 const Technique*
 Profile::technique( const std::string& sid ) const
+{
+    Logger log = getLogger( "Scene.Profile.technique" );
+
+    if( m_techniques.empty() ) {
+        SCENELOG_ERROR( log, "No techniques specified for profile '"<< m_id << '\'' );
+        return NULL;
+    }
+
+    // Empty sid, return first technique
+    if( sid.empty() ) {
+        return m_techniques[0];
+    }
+
+    // Otherwise, search through sids.
+    for( auto i=m_techniques.begin(); i!=m_techniques.end(); ++i ) {
+        if( (*i)->sid() == sid ) {
+            return *i;
+        }
+    }
+    return NULL;
+}
+
+
+Technique*
+Profile::technique( const std::string& sid )
 {
     Logger log = getLogger( "Scene.Profile.technique" );
 
@@ -111,38 +160,19 @@ Profile::addParameter( const Parameter& p )
     m_db.moveForward( *this );
 }
 
-
-
-Technique*
-Profile::createTechnique( const std::string sid )
+const Parameter*
+Profile::parameter( const std::string& sid ) const
 {
-    Logger log = getLogger( "Scene.Profile.createTechnique" );
     if( sid.empty() ) {
-        SCENELOG_ERROR( log, "non-empty sid required." );
         return NULL;
     }
-    for(size_t i=0; i<m_techniques.size(); i++) {
-        if( m_techniques[i]->sid() == sid ) {
-            SCENELOG_ERROR( log, "Technique with sid='" << sid << "' already exists.");
-            return NULL;
+    for( auto it=m_parameters.begin(); it!=m_parameters.end(); ++it ) {
+        if( (*it)->sid() == sid ) {
+            return *it;
         }
     }
-
-
-    Technique* technique = new Technique( m_db,
-                                          m_effect,
-                                          this,
-                                          sid );
-    m_techniques.push_back( technique );
-    return technique;
+    return m_effect->parameter( sid );
 }
-
-
-
-
-
-
-
 
 
 }
