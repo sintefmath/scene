@@ -165,18 +165,9 @@ public:
                 m_renderlist.build( m_onscreen_visual_scenes[ m_onscreen_scene ] );
 
 
+                updateBoundingBox();
 
-                Scene::Value bb_min, bb_max;
-                if( Scene::Tools::visualSceneExtents( bb_min, bb_max, m_renderlist.renderList() ) ) {
-                    m_viewer->updateViewVolume( glm::vec3( bb_min.floatData()[0],
-                                                           bb_min.floatData()[1],
-                                                           bb_min.floatData()[2] ),
-                                                glm::vec3( bb_max.floatData()[0],
-                                                           bb_max.floatData()[1],
-                                                           bb_max.floatData()[2] ) );
-                    m_viewer->viewAll();
-                }
-            }
+             }
         }
 #ifdef SCENE_TINIA
         else if( key == 'e' ) {
@@ -399,7 +390,14 @@ protected:
         else {
             m_onscreen_scene = 0;
         }
+        updateBoundingBox();
+       
+    }
 
+    
+    void
+    updateBoundingBox()
+    {
         Scene::Value bb_min, bb_max;
         if( Scene::Tools::visualSceneExtents( bb_min, bb_max, m_renderlist.renderList() ) ) {
             m_viewer->updateViewVolume( glm::vec3( bb_min.floatData()[0],
@@ -409,9 +407,20 @@ protected:
                                                    bb_max.floatData()[1],
                                                    bb_max.floatData()[2] ) );
             m_viewer->viewAll();
+            std::cerr << "Bounding box: ["
+                      << bb_min.floatData()[0] << ", "
+                      << bb_min.floatData()[1] << ", "
+                      << bb_min.floatData()[2] << "], ["
+                      << bb_max.floatData()[0] << ", "
+                      << bb_max.floatData()[1] << ", "
+                      << bb_max.floatData()[2] << "]\n";
         }
+        else {
+            std::cerr << "Failed to determine bounding box.\n";
+        }
+        
     }
-
+    
 
     void
     reshape( int w, int h )
