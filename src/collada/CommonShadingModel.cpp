@@ -105,7 +105,12 @@ Importer::parseCommonShadingModel( Technique* technique,
             sm->setComponentParameterReference( type, ref );
         }
         else if( color && strEq( nn->name, "texture" ) ) {
-            SCENELOG_WARN( log, "<texture> in <profile_COMMON> is currently ignored." );
+            // which image to use as texturing source
+            std::string ref = attribute( nn, "texture" );
+            //std::string crd = attribute( nn, "texcoord" );
+            sm->setComponentImageReference( type, ref );
+
+//            SCENELOG_WARN( log, "<texture> in <profile_COMMON> is currently ignored." << ref );
             continue;
         }
         else {

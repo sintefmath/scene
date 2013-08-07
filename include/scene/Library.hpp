@@ -65,6 +65,10 @@ public:
     const DataBase*
     dataBase() const;
 
+    /** Generate an unique id. */
+    const std::string
+    generateId() const;
+
 protected:
     DataBase*                                m_database;
     Asset                                    m_asset;
@@ -76,6 +80,7 @@ protected:
     void
     setDatabase( DataBase* database );
 
+    static const std::string                 m_autoid_prefix;
     static const std::string                 m_instance_name;
 
 

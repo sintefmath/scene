@@ -225,7 +225,8 @@ protected:
                 const ValueContext  context );
 
     bool
-    parseLibraryImages( const Asset& asset_parent,
+    parseLibraryImages( Context      context,
+                        const Asset& asset_parent,
                         xmlNodePtr lib_images_node );
 
     bool
@@ -261,7 +262,13 @@ protected:
     parseInitFrom( Image* image, xmlNodePtr init_from_node );
 
     bool
-    parseImage( const Asset& asset_parent,
+    parseImage( Context      context,
+                const Asset& asset_parent,
+                xmlNodePtr image_node );
+
+    bool
+    parseImage2( Context      context,
+                const Asset& asset_parent,
                 xmlNodePtr image_node );
 
     bool

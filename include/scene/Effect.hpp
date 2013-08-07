@@ -37,15 +37,18 @@ public:
     profile( ProfileType type ) const;
 
     Profile*
+    profile( ProfileType type );
+    
+    
+    Profile*
     createProfile( ProfileType );
 
 
-    /** Generate shaders from COMMON profile. */
-    void
-    generate( ProfileType profile );
-
     const Parameter*
     parameter( const size_t index ) const;
+    
+    const Parameter*
+    parameter( const std::string& sid ) const;
 
     const size_t
     parameters() const { return m_parameters.size(); }
