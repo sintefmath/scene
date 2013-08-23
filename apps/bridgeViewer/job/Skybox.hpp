@@ -11,7 +11,7 @@ public:
     ~Skybox();
 
 private:
-    void loadSkyboxImages( unsigned int tex_id );
+    void createCubeMap( );
     unsigned int m_vao;
     unsigned int m_cubemap;
     const char* m_tex_base_path;

@@ -118,10 +118,7 @@ Skybox::initSkybox()
     //read image files
 
     //setup cubemap
-    glGenTextures( 1, &m_cubemap );
-    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
-    
-    loadSkyboxImages( m_cubemap );
+    loadSkyboxImages( );
 }
 
 void
@@ -131,13 +128,16 @@ Skybox::renderSkybox()
 }
 
 void
-Skybox::loadSkyboxImages( GLuint tex_id )
+Skybox::createCubeMap( )
 {
+    glGenTextures( 1, &m_cubemap);
+    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
     //hardcoding location of skybox images for now.
     //would be nice to just embed them in .exe or something, but will not add qtResource for it now.
     //will need image loading lib for this, using stb_image  
 
-    //names need to be skybox_[side].png, with side= [up, down, north, south, east, west]
+    //names need to be skybox_[side].png, with side= [east, west, up, down, south, north]
+    //ordering corresponding to GL_TEXTURE_CUBE_MAP_[side] ordering.
     int x,y,n;
     std::vector< std::string > img_names;
     img_names.push_back( std::string(m_tex_base_path) + " skybox_east.jpg" );
@@ -156,6 +156,7 @@ Skybox::loadSkyboxImages( GLuint tex_id )
         glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_FLOAT, (void*)temp );
 
     }
-    
+
+    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );    
 }
 
