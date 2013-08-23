@@ -290,6 +290,28 @@ IF(SCENE_TINIA)
 			   ${TINIA_LIBRARIES}
                            ${PNG_LIBRARIES} )
 MESSAGE("tinia libs: ${TINIA_LIBRARIES}")
+
+    FILE( GLOB APP_BRIDGE_VIEWER_HDR   "apps/bridgeviewer/job/*.h*" )
+    FILE( GLOB APP_BRIDGE_VIEWER_SRC   "apps/bridgeviewer/job/*.c*" )
+    SET( APP_BRIDGE_DESKTOP_VIEWER     "apps/bridgeviewer/main_desktop.cpp" )
+    SET( APP_BRIDGE_CLOUD_VIEWER       "apps/bridgeviewer/main_cloud.cpp" )
+    SET_SOURCE_FILES_PROPERTIES( ${APP_BRIDGE_VIEWER_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
+    
+    ADD_EXECUTABLE( bridge_desktop_viewer ${APP_BRIDGE_VIEWER_HDR}
+                                          ${APP_BRIDGE_VIEWER_SRC}
+                                          ${APP_BRIDGE_DESKTOP_VIEWER} )
+
+    TARGET_LINK_LIBRARIES( bridge_desktop_viewer
+                           scene
+                           scene_glsl
+                           scene_collada
+                           ${SCENE_TINIA_LIB}
+                           ${PLATFORM_DEP_LIBS}
+                           ${LIBXML2_LIBRARIES}
+                           ${LOG4CXX_LIBRARIES}
+                           ${Boost_SYSTEM_LIBRARY}
+                           ${TINIA_LIBRARIES}
+                           ${PNG_LIBRARIES} )
 ENDIF(SCENE_TINIA)
 
 
