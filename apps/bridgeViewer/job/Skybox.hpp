@@ -14,6 +14,7 @@ private:
     void createCubeMap( );
     unsigned int m_vao;
     unsigned int m_cubemap;
+    unsigned int m_shader_prog;
     const char* m_tex_base_path;
 
 };

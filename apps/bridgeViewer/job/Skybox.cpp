@@ -5,6 +5,9 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 #include "stb_image.h"
 
@@ -82,7 +85,74 @@ texCoords = inPosition;\n                                       \
                                             1.0f, -1.0f, 1.0f, 0.0f,
                                             1.0f, -1.0f, -1.0f, 0.0f                                            
     };
-  
+
+
+    static bool checkShader( GLuint shaderID )
+    {
+        GLint llength;
+        GLint status;
+
+        glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &llength);
+        glGetShaderiv(shaderID, GL_COMPILE_STATUS, &status);
+        if( status != GL_TRUE) {
+            std::string infol;
+            if(llength > 1) {
+                GLchar* infoLog = new GLchar[llength];
+                glGetShaderInfoLog(shaderID, llength, NULL, infoLog);
+                infol = std::string( infoLog );
+                delete[] infoLog;
+            }
+            else {
+                infol = "no log.";
+            }
+
+            if( status != GL_TRUE ) {
+                std::cerr << "Compilation returned errors." << std::endl;
+            }
+            std::cerr << infol << std::endl;
+
+            return false;
+        }
+        return true;
+    }
+
+    static void checkLinkerStatus( GLuint programID )
+    {
+        GLint linkStatus;
+        glGetProgramiv( programID, GL_LINK_STATUS, &linkStatus );
+        if( linkStatus != GL_TRUE ) {
+
+            std::string log;
+	
+            GLint logSize;
+            glGetProgramiv( programID, GL_INFO_LOG_LENGTH, &logSize );
+            if( logSize > 0 ) {
+                std::vector<GLchar> infoLog( logSize+1 );
+                glGetProgramInfoLog( programID, logSize, NULL, &infoLog[0] );
+                log = std::string( infoLog.begin(), infoLog.end() );
+            }
+            else {
+                log = "Empty log.";
+            }
+            std::cerr << "Error linking program: " << std::endl;
+            std::cerr << log << std::endl;
+        }
+    }
+
+    static void dumpSourceWithLineNumbers(const std::string &orig, std::ostream &output = std::cerr)
+    {
+        std::stringstream input(orig);
+        std::string temp;
+        size_t lCounter = 1;
+        while(std::getline(input, temp))
+            {
+                output << std::setw(3) << lCounter++ << ": ";
+                output << temp << std::endl;
+            }
+        output.flush();
+    }
+
+    
 }
 
 
@@ -118,7 +188,7 @@ Skybox::initSkybox()
     //read image files
 
     //setup cubemap
-    loadSkyboxImages( );
+    createCubeMap();
 }
 
 void
@@ -157,6 +227,27 @@ Skybox::createCubeMap( )
 
     }
 
-    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );    
+    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+
+    GLuint vs, fs;
+    m_shader_prog = glCreateProgram();
+    vs = glCreateShader( GL_VERTEX_SHADER );
+    fs = glCreateShader( GL_FRAGMENT_SHADER );
+    glShaderSource( vs, 1, &skybox_vs, NULL );
+    glShaderSource( fs, 1, &skybox_fs, NULL );
+
+    glCompileShader( vs );
+    glCompileShader( fs );
+    if( !checkShader( vs ) ) {
+        dumpSourceWithLineNumbers( skybox_vs );
+    }
+    
+    if( !checkShader( fs ) ) {
+        dumpSourceWithLineNumbers( skybox_fs );
+    }
+
+    glLinkProgram( m_shader_prog );
+    checkLinkerStatus( m_shader_prog );
+
 }
 
