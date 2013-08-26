@@ -8,6 +8,7 @@
 #include <scene/collada/Importer.hpp>
 #include <scene/tinia/Bridge.hpp>
 #include <scene/tools/BBoxTool.hpp>
+#include <scene/tools/ShaderGen.hpp>
 
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
@@ -223,17 +224,10 @@ TiniaViewerJob::readFiles()
     }
 
     // --- Check if any effects have missing GLSL/GLES2-profiles ---------------
-    for( size_t i=0; i<m_scene_db->library<Scene::Effect>().size(); i++ ) {
-        Scene::Effect* e = m_scene_db->library<Scene::Effect>().get( i );
-        if( e->profile( Scene::PROFILE_GLSL ) == NULL ) {
-            std::cerr << "Effect '" << e->id() << "' has no GLSL profile, trying to generate from COMMON profile.\n";
-            e->generate( Scene::PROFILE_GLSL );
-        }
-        if( e->profile( Scene::PROFILE_GLES2 ) == NULL ) {
-            std::cerr << "Effect '" << e->id() << "' has no GLES2 profile, trying to generate from COMMON profile.\n";
-            e->generate( Scene::PROFILE_GLES2 );
-        }
-    }
+	Scene::Tools::generateShadersFromCommon( *m_scene_db,
+		Scene::PROFILE_GLSL | 
+		Scene::PROFILE_GLES2 );
+    
 
 
     // --- Update bounding boxes of geometries ---------------------------------
