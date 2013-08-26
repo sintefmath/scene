@@ -9,6 +9,8 @@
 #include <tinia/renderlist/DataBase.hpp>
 #include <scene/tinia/Bridge.hpp>
 
+class Skybox;
+
 class TiniaViewerJob
         : public tinia::jobcontroller::OpenGLJob,
           public tinia::model::StateListener
@@ -89,5 +91,8 @@ protected:
 
     void
     switchToCameraInstance( size_t ix );
+
+
+    Skybox *m_skybox;
 
 };

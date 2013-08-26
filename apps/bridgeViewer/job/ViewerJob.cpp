@@ -12,6 +12,8 @@
 
 #include "Skybox.hpp"
 
+#define skybox_texture_location "C:/Dependencies/skybox/"
+
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
 
@@ -82,10 +84,14 @@ TiniaViewerJob::TiniaViewerJob( const std::list<std::string>& files )
     rightcol->addChild( new tinia::model::gui::VerticalExpandingSpace );
 
     m_model->setGUILayout( root, tinia::model::gui::DESKTOP );
+
+    m_skybox = new Skybox( skybox_texture_location );
+    
 }
 
 TiniaViewerJob::~TiniaViewerJob()
 {
+    delete(m_skybox);
 }
 
 void
@@ -130,6 +136,7 @@ TiniaViewerJob::initGL()
     glewInit();
     m_glsl_runtime = new Scene::Runtime::GLSLRuntime( *m_scene_db );
     m_glsl_renderlist = new Scene::Runtime::GLSLRenderList( *m_glsl_runtime );
+	m_skybox->init();
     return true;
 }
 
@@ -163,16 +170,19 @@ TiniaViewerJob::renderFrame( const std::string&  session,
 
     // Not all COLLADA files have buffer clearing set up
     glBindFramebuffer( GL_FRAMEBUFFER, fbo );
+    glClearColor(0.2, 0.3f, 0.1f, 0.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
     m_glsl_renderlist->render();
 
-    if( m_app_camera_node != NULL ) {
+    // if( m_app_camera_node != NULL ) {
         // Render skybox last, making use of depth test to minimize overdraw
         // MVi,  viewer.modelviewMatrix.data() and viewer.projectionMatrix.data
-        //renderSkybox();
-    }
+
+    m_skybox->render(viewer.modelviewMatrix.data(), viewer.projectionMatrix.data() );
+                
+        //    }
 
     return true;
 }
