@@ -142,7 +142,7 @@ TiniaViewerJob::renderFrame( const std::string&  session,
     }
     tinia::model::Viewer viewer;
     m_model->getElementValue( "viewer", viewer );
-    m_glsl_renderlist->setDefaultOutput( 0, 0, 0, width, height );
+    m_glsl_renderlist->setDefaultOutput( fbo, 0, 0, width, height );
 
     // Forward tinia projection matrix to app_camera
     if( m_app_camera != NULL ) {
@@ -157,7 +157,7 @@ TiniaViewerJob::renderFrame( const std::string&  session,
     }
 
     // Not all COLLADA files have buffer clearing set up
-    glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+    glBindFramebuffer( GL_FRAMEBUFFER, fbo );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
@@ -208,7 +208,7 @@ TiniaViewerJob::readFiles()
                   (it->substr( it->length()-4 ) == ".dae") ||
                   (it->substr( it->length()-4 ) == ".DAE") ) )
         {
-            importer.parse( *it );
+	  importer.parse( *it );
         }
     }
     m_files_to_read.clear();
