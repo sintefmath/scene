@@ -17,9 +17,9 @@ const char* skybox_fs = "#version 330\n\
     \n                                                \
     void main(void)\n                                 \
     {\n                                               \
-//    colour = texture( skyboxCube, texCoords );\n      \
-    colour.r = 1.0f;\n                            \
-    colour.g = 0.25f;\n                            \
+    colour = texture( skyboxCube, texCoords );\n      \
+//    colour.r = 1.0f;\n                            \
+//    colour.g = 0.25f;\n                            \
     colour.b = 1.0f;\n                            \
     colour.w = 1.0f;\n                                 \
     }\n";

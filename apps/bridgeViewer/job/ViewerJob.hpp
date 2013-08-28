@@ -94,5 +94,7 @@ protected:
 
 
     Skybox *m_skybox;
+	const float* m_bbMin;
+	const float* m_bbMax;
 
 };

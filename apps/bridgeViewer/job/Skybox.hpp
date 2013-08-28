@@ -6,7 +6,7 @@ public:
     Skybox( const char* texture_base_path = nullptr );
 
     void init();
-    void render( float* mvp, float* projection);
+    void render( float* mvp, float* projection, const float* bbMin, const float* bbMax );
 
     ~Skybox();
 

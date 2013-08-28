@@ -137,6 +137,16 @@ TiniaViewerJob::initGL()
     m_glsl_runtime = new Scene::Runtime::GLSLRuntime( *m_scene_db );
     m_glsl_renderlist = new Scene::Runtime::GLSLRenderList( *m_glsl_runtime );
 	m_skybox->init();
+	//testing if I can get the damn bbox
+	//Scene::Runtime::Resolver resolver( *m_scene_db, Scene::PROFILE_GLSL, "" );
+	//Scene::Runtime::RenderList renderlist( resolver );
+	//renderlist.build( m_visual_scenes[ m_visual_scene ] );
+	//
+	//Scene::Value bb_min, bb_max;
+	//if( Scene::Tools::visualSceneExtents( bb_min, bb_max, renderlist ) ) {
+	//	m_bbMax = bb_max.floatData();
+	//	m_bbMin = bb_min.floatData();
+	//}
     return true;
 }
 
@@ -173,14 +183,14 @@ TiniaViewerJob::renderFrame( const std::string&  session,
     glClearColor(0.2, 0.3f, 0.1f, 0.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    //    m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
-    //    m_glsl_renderlist->render();
+    m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
+    m_glsl_renderlist->render();
 
     // if( m_app_camera_node != NULL ) {
         // Render skybox last, making use of depth test to minimize overdraw
         // MVi,  viewer.modelviewMatrix.data() and viewer.projectionMatrix.data
     glViewport(0,0,width,height);
-    m_skybox->render(viewer.modelviewMatrix.data(), viewer.projectionMatrix.data() );
+    m_skybox->render(viewer.modelviewMatrix.data(), viewer.projectionMatrix.data(), m_bbMin, m_bbMax );
                 
         //    }
 
@@ -315,6 +325,8 @@ TiniaViewerJob::readFiles()
     }
     m_model->updateRestrictions( "camera_instances", tmp.front(), tmp );
     switchToCameraInstance( 0 );
+
+	
 }
 
 void

@@ -163,35 +163,30 @@ void
 Skybox::init()
 {
 
-    //setup vao
+    //setup empty vao
     glGenVertexArrays( 1, &m_vao );
     glBindVertexArray( m_vao );
-//    GLuint vbo;
-//    glGenBuffers( 1, &vbo );
-//    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-//    glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 144, skybox_vertices, GL_STATIC_DRAW );
-//    glVertexAttribPointer( skybox_position_location, 4, GL_FLOAT, false, 0, nullptr );
-//    glEnableVertexAttribArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindVertexArray( 0 );
 
 
     //setup cubemap
-    //    createCubeMap();
+	createCubeMap();
     CHECK_GL;
     m_shader_prog = createSkyboxShader();
     CHECK_GL;
 }
 
 void
-Skybox::render( float* mvp, float* p )
+Skybox::render( float* mvp, float* p, const float* bbMin, const float* bbMax )
 {
+    glDisable(GL_DEPTH_TEST);
     glUseProgram( m_shader_prog );
     glBindVertexArray( m_vao );
-//    glActiveTexture( GL_TEXTURE0 );
-//    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
     CHECK_GL;
-    //    glUniform1i( skybox_cube_map_location, 0 );
+    glUniform1i( skybox_cube_map_location, 0 );
     float bbmin[3] = { -1.0, -1.0, -1.0 };
     float bbmax[3] = { 1.0, 1.0, 1.0 };
     glUniform3fv( 0, 1, bbmin );
@@ -200,11 +195,11 @@ Skybox::render( float* mvp, float* p )
     glUniformMatrix4fv( skybox_proj_location, 1, GL_FALSE, p );
     CHECK_GL;
     glDrawArrays( GL_TRIANGLES, 0, 36 );
-    //glDrawArrays( GL_TRIANGLE_STRIP, 0, 3 );
+    glDrawArrays( GL_TRIANGLE_STRIP, 0, 3 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     CHECK_GL;
-    //    glActiveTexture( GL_TEXTURE0 );
-    //    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
     glUseProgram( 0 );
     glBindVertexArray( 0 );
     CHECK_GL;
@@ -214,36 +209,36 @@ Skybox::render( float* mvp, float* p )
 void
 Skybox::createCubeMap( )
 {
-    //glGenTextures( 1, &m_cubemap);
-    //glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
-    ////    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
-    ////hardcoding location of skybox images for now.
-    ////would be nice to just embed them in .exe or something, but will not add qtResource for it now.
-    ////will need image loading lib for this, using stb_image  
-	//
-    ////names need to be skybox_[side].png, with side= [east, west, up, down, south, north]
-    ////ordering corresponding to GL_TEXTURE_CUBE_MAP_[side] ordering.
-    //int x,y,n;
-    //std::vector< std::string > img_names;
-    //img_names.push_back( std::string(m_tex_base_path) + "skybox_east.jpg" );
-    //img_names.push_back( std::string(m_tex_base_path) + "skybox_west.jpg" );
-    //img_names.push_back( std::string(m_tex_base_path) + "skybox_up.jpg" );
-    //img_names.push_back( std::string(m_tex_base_path) + "skybox_down.jpg" );
-    //img_names.push_back( std::string(m_tex_base_path) + "skybox_south.jpg" );
-    //img_names.push_back( std::string(m_tex_base_path) + "skybox_north.jpg" );
-	//
-    //unsigned char* temp;
-    //int format;
-    //for(auto i = 0u; i < img_names.size(); ++i )
-    //{
-    //    temp = stbi_load( img_names[i].c_str(), &x, &y, &n, 4 );
-    //    format = GL_RGBA; //n == 4 ? GL_RGBA : GL_RGB;
-    //    glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_BYTE, (void*)temp );
-    //    //        glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_BYTE, (void*)temp );
-	//
-    //}
-	//
-    //glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+    glGenTextures( 1, &m_cubemap);
+    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
+    //    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
+    //hardcoding location of skybox images for now.
+    //would be nice to just embed them in .exe or something, but will not add qtResource for it now.
+    //will need image loading lib for this, using stb_image  
+	
+    //names need to be skybox_[side].png, with side= [east, west, up, down, south, north]
+    //ordering corresponding to GL_TEXTURE_CUBE_MAP_[side] ordering.
+    int x,y,n;
+    std::vector< std::string > img_names;
+    img_names.push_back( std::string(m_tex_base_path) + "skybox_east.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "skybox_west.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "skybox_up.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "skybox_down.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "skybox_south.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "skybox_north.jpg" );
+	
+    unsigned char* temp;
+    int format;
+    for(auto i = 0u; i < img_names.size(); ++i )
+    {
+        temp = stbi_load( img_names[i].c_str(), &x, &y, &n, 4 );
+        format = GL_RGBA; //n == 4 ? GL_RGBA : GL_RGB;
+        glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_BYTE, (void*)temp );
+        //        glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_BYTE, (void*)temp );
+	
+    }
+	
+    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
 
 }
 
