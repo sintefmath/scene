@@ -23,66 +23,45 @@ const char* skybox_fs = "#version 330\n\
     colour.b = 1.0f;\n                            \
     colour.w = 1.0f;\n                                 \
     }\n";
-/*
-    const char* skybox_vs = "\
-#version 330\n                                          \
-layout(location=0) in vec4 inPosition;                  \
-void main(void)\n                                       \
-{\n                                                     \
-  //drawing single triangle to cover entire screen\n    \
-  float z = inPosition.z;                               \
-  if( gl_VertexID == 0 ) {\n                            \
-    gl_Position = vec4( -1.0, -1.0, z, 1.0 );\n       \
-  }\n                                                   \
-  else if( gl_VertexID == 1) {\n                        \
-    gl_Position = vec4( 1.0, -1.0, z, 1.0 );\n        \
-  }\n                                                   \
-  else if( gl_VertexID == 2) {\n                        \
-    gl_Position = vec4( -1.0, 1.0, z, 1.0 );\n        \
-  }else if( gl_VertexID == 3) {\n                       \
-    gl_Position = vec4( 1.0, 1.0, z, 1.0 );\n         \
-  }\n                                                   \
-}\n                                                     \
-";
-*/
 
-    /*
-    const char* skybox_vs = "\
-#version 330\n                                          \
-void main(void)\n                                       \
-{\n                                                     \
-  //drawing single triangle to cover entire screen\n    \
-  if( gl_VertexID == 0 ) {\n                            \
-    gl_Position = vec4( -1.0, -1.0, 0.0, 1.0 );\n       \
-  }\n                                                   \
-  else if( gl_VertexID == 1) {\n                        \
-    gl_Position = vec4( 1.0, -1.0, 0.0, 1.0 );\n        \
-  }\n                                                   \
-  else if( gl_VertexID == 2) {\n                        \
-    gl_Position = vec4( -1.0, 1.0, 0.0, 1.0 );\n        \
-  }else if( gl_VertexID == 3) {\n                       \
-    gl_Position = vec4( 1.0, 1.0, 0.0, 1.0 );\n         \
-  }\n                                                   \
-}\n                                                     \
-";
-*/
-
-    
 const char* skybox_vs = "#version 330\n\
-    \n#extension GL_ARB_explicit_uniform_location : require\n    \
-    \n                                                \
-    layout(location=0) in vec4 inPosition;\n          \
-    \n                                                \
-    layout(location=7) uniform mat4 modelView;\n                         \
-    layout(location=6) uniform mat4 projection;\n                        \
-    \n                                                \
-    out vec3 texCoords;\n                             \
-    \n                                                \
-    void main(void){\n                                              \
-    vec3 wPos = ( modelView * vec4(inPosition.xyz, 0.0f) ).xyz;\n      \
-//gl_Position =  projection  * modelView * vec4(inPosition.xyz, 1.0 );\n       \
-    gl_Position = vec4(inPosition.xyz, 1.0 );\n       \
-    \n                                                              \
-    texCoords = wPos;\n                                       \
-    }\n";
-        
+#extension GL_ARB_explicit_uniform_location : require\n\
+\n\
+layout(location=0) uniform vec3 bbMin;\n\
+layout(location=1) uniform vec3 bbMax;\n\
+layout(location=7) uniform mat4 modelView;\n\
+layout(location=6) uniform mat4 projection;\n\
+\n\
+out vec3 texCoords;\n\
+\n\
+bool isTop(void){\n\
+    return ((gl_VertexID >= 2 && gl_VertexID <=4) || \n\
+            (gl_VertexID >= 8 && gl_VertexID <=10) ||\n\
+            (gl_VertexID >= 13 && gl_VertexID <= 15) ||\n\
+            (gl_VertexID >= 20 && gl_VertexID <= 22)\n\
+            );\n\
+}\n\
+\n\
+bool isRight(void){\n\
+    return ((gl_VertexID >= 1 && gl_VertexID <= 3) || \n\
+            (gl_VertexID >= 6 && gl_VertexID <= 13) ||\n\
+            gl_VertexID == 17\n\
+            );\n\
+}\n\
+bool isFront(void){\n\
+    return ((gl_VertexID >= 0 && gl_VertexID <= 6) || \n\
+            (gl_VertexID == 10 || gl_VertexID == 11) ||\n\
+            (gl_VertexID >= 10 && gl_VertexID <= 21)\n\
+            );\n\
+}\n\
+\n\
+void main(void){\n\
+    float x = isRight() ? bbMax.x : bbMin.x;\n\
+    float y = isTop() ? bbMax.y : bbMin.y;\n\
+    float z = isFront() ? bbMax.z : bbMin.z;\n\
+\n\
+    texCoords = vec3(x, y, z);\n\
+    gl_Position = vec4( x, y, z, 1.0f) ;\n\
+}\n\
+";
+

@@ -14,63 +14,8 @@
 #define CHECK_GL do { printGLError( __FILE__, __LINE__ ); } while(0)
 
 namespace {
+
 #include "Shaders.hpp"
-
-    /*    
-const float skybox_vertices[16] = {
-    -1.0, -1.0, 0.0, 1.0,
-     1.0, -1.0, 0.0, 1.0,
-    -1.0,  1.0, 0.0, 1.0,
-     1.0,  1.0, 0.0, 1.0
-};
-    */    
-    
-
-const float skybox_vertices[144] = { 
-    -1.0f, -1.0f, -1.0f, 0.0f, //front
-     1.0f, -1.0f, -1.0f, 0.0f,
-     1.0f,  1.0f, -1.0f, 0.0f,
-     1.0f,  1.0f, -1.0f, 0.0f,
-    -1.0f,  1.0f, -1.0f, 0.0f,
-    -1.0f, -1.0f, -1.0f, 0.0f,
-                        
-    -1.0f, -1.0f, 1.0f, 0.0f, //back
-     1.0f, -1.0f, 1.0f, 0.0f,
-     1.0f,  1.0f, 1.0f, 0.0f,
-     1.0f,  1.0f, 1.0f, 0.0f,
-    -1.0f,  1.0f, 1.0f, 0.0f,
-    -1.0f, -1.0f, 1.0f, 0.0f,
-                        
-    -1.0f, -1.0f, -1.0f, 0.0f, //bottom
-     1.0f, -1.0f, -1.0f, 0.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-    -1.0f, -1.0f,  1.0f, 0.0f,
-    -1.0f, -1.0f, -1.0f, 0.0f,
-                        
-    -1.0f, 1.0f, -1.0f, 0.0f, //top
-     1.0f, 1.0f, -1.0f, 0.0f,
-     1.0f, 1.0f,  1.0f, 0.0f,
-     1.0f, 1.0f,  1.0f, 0.0f,
-    -1.0f, 1.0f,  1.0f, 0.0f,
-    -1.0f, 1.0f, -1.0f, 0.0f,
-                        
-    -1.0f, -1.0f, -1.0f, 0.0f, //left
-    -1.0f,  1.0f, -1.0f, 0.0f,
-    -1.0f,  1.0f,  1.0f, 0.0f,
-    -1.0f,  1.0f,  1.0f, 0.0f,
-    -1.0f, -1.0f,  1.0f, 0.0f,
-    -1.0f, -1.0f, -1.0f, 0.0f,
-                        
-     1.0f, -1.0f, -1.0f, 0.0f, //right
-     1.0f,  1.0f, -1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f, 0.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f, -1.0f, -1.0f, 0.0f                                            
-};
-
-
 
 bool checkShader( GLuint shaderID )
 {
@@ -221,12 +166,12 @@ Skybox::init()
     //setup vao
     glGenVertexArrays( 1, &m_vao );
     glBindVertexArray( m_vao );
-    GLuint vbo;
-    glGenBuffers( 1, &vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 144, skybox_vertices, GL_STATIC_DRAW );
-    glVertexAttribPointer( skybox_position_location, 4, GL_FLOAT, false, 0, nullptr );
-    glEnableVertexAttribArray( 0 );
+//    GLuint vbo;
+//    glGenBuffers( 1, &vbo );
+//    glBindBuffer( GL_ARRAY_BUFFER, vbo );
+//    glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 144, skybox_vertices, GL_STATIC_DRAW );
+//    glVertexAttribPointer( skybox_position_location, 4, GL_FLOAT, false, 0, nullptr );
+//    glEnableVertexAttribArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindVertexArray( 0 );
 
@@ -247,10 +192,14 @@ Skybox::render( float* mvp, float* p )
 //    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
     CHECK_GL;
     //    glUniform1i( skybox_cube_map_location, 0 );
+    float bbmin[3] = { -1.0, -1.0, -1.0 };
+    float bbmax[3] = { 1.0, 1.0, 1.0 };
+    glUniform3fv( 0, 1, bbmin );
+    glUniform3fv( 1, 1, bbmax );
     glUniformMatrix4fv( skybox_mvp_location, 1, GL_FALSE, mvp );
     glUniformMatrix4fv( skybox_proj_location, 1, GL_FALSE, p );
     CHECK_GL;
-    glDrawArrays( GL_TRIANGLES, 0, 6 );
+    glDrawArrays( GL_TRIANGLES, 0, 36 );
     //glDrawArrays( GL_TRIANGLE_STRIP, 0, 3 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     CHECK_GL;
