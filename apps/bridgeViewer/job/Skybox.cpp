@@ -172,7 +172,6 @@ Skybox::init()
 
     CHECK_GL;
     m_shader_prog = createSkyboxShader();
-    m_tex_location = glGetUniformLocation( m_shader_prog, "skyboxTexture" );
 
     CHECK_GL;
 }
@@ -189,7 +188,7 @@ Skybox::render( float* mvp, float* p )
     glUniformMatrix4fv( skybox_mvp_location, 1, GL_FALSE, mvp );
     glUniformMatrix4fv( skybox_proj_location, 1, GL_FALSE, p );
     CHECK_GL;
-    glDrawArrays( GL_TRIANGLES, 0, 36 );
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     CHECK_GL;
     glActiveTexture( GL_TEXTURE0 );

@@ -28,31 +28,10 @@ layout(location=6) uniform mat4 projection;\n                           \
 \n                                                                      \
 out vec3 texCoords;\n                                                   \
 \n                                                                      \
-bool isTop(void){\n                                                     \
-    return ((gl_VertexID >= 2 && gl_VertexID <=4) || \n                 \
-            (gl_VertexID >= 8 && gl_VertexID <=10) ||\n                 \
-            (gl_VertexID >= 13 && gl_VertexID <= 15) ||\n               \
-            (gl_VertexID >= 20 && gl_VertexID <= 22)\n                  \
-            );\n                                                        \
-}\n                                                                     \
-\n                                                                      \
-bool isRight(void){\n                                                   \
-    return ((gl_VertexID >= 1 && gl_VertexID <= 3) || \n                \
-            (gl_VertexID >= 6 && gl_VertexID <= 13) ||\n                \
-            gl_VertexID == 17\n                                         \
-            );\n                                                        \
-}\n                                                                     \
-bool isFront(void){\n                                                   \
-    return ((gl_VertexID >= 0 && gl_VertexID <= 6) || \n                \
-            (gl_VertexID == 10 || gl_VertexID == 11) ||\n               \
-            (gl_VertexID >= 10 && gl_VertexID <= 21)\n                  \
-            );\n                                                        \
-}\n                                                                     \
-\n                                                                      \
 void main(void){\n                                                      \
-    float x = isRight() ? 1.0f : -1.0f;\n                          \
-    float y = isTop() ?   1.0f : -1.0f;\n                            \
-    float z = isFront() ? 1.0f : -1.0f;\n                          \
+    float x = gl_VertexID == 0 ? -3.0f : 1.0f;\n                               \
+    float y = gl_VertexID == 2 ? 3.0f : -1.0f;\n                               \
+    float z = 1.0f;\n                                                   \
 \n                                                                      \
     mat4 mvI = modelView;                       \n                      \
     mvI[3][0] = 0.0f;                            \n                      \
