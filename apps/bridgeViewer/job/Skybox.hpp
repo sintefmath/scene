@@ -14,8 +14,9 @@ private:
     void createCubeMap( );
     unsigned int m_vao;
 
-    unsigned int m_cubemap;
+    unsigned int m_texture;
     unsigned int m_shader_prog;
+    unsigned int m_tex_location;
     const char* m_tex_base_path;
 
 };

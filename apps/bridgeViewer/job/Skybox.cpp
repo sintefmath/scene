@@ -107,7 +107,6 @@ GLuint createSkyboxShader()
 
     glLinkProgram( shader_prog );
     checkLinkerStatus( shader_prog );
-
     //hopefully safe to flag for deletion now, since they are attached and linked.
     //spec says its safe, drivers not always complying. 
     glDeleteShader( vs );
@@ -141,7 +140,56 @@ inline void printGLError(std::string fname, int line)
     }
 }
     
+    void fillTexData( float* col, float* data )
+{
+    size_t size = 512 * 512 * 4;
+    for( auto i = 0u; i < size-4; i+=4 ){
+        data[i] =   col[0];
+        data[i+1] = col[1];
+        data[i+2] = col[2];
+        data[i+3] = col[3];
+    }
+}    
+
+GLuint createProceduralTexture()
+{
+    GLuint cbTex;
+    glGenTextures( 1, &cbTex );
+    //glBindTexture( GL_TEXTURE_2D, cbTex );
+    glBindTexture( GL_TEXTURE_CUBE_MAP, cbTex );
+
+    float col[4] = {1.0, 0.0, 0.0, 1.0};
+    float* data = new float[512*512*4];
+    fillTexData( col, data);
+    // glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_FLOAT, (void*)data);
+    glTexParameterf( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    glTexParameterf( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+    glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_FLOAT, (void*)data);
+    col[0] = 0.0f;
+    col[1] = 1.0f;
+    fillTexData( col, data );
+    glTexImage2D( GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_FLOAT, (void*)data);
+    col[1] = 0.0f;
+    col[2] = 1.0f;
+    fillTexData( col, data );
+    glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_FLOAT, (void*)data);
+    col[1] = 1.0f;
+    fillTexData( col, data );
+    glTexImage2D( GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_FLOAT, (void*)data);
+    col[0] = 1.0f;
+    fillTexData( col, data );
+    glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_FLOAT, (void*)data);
+    col[2] = 0.0f;
+    fillTexData( col, data );
+    glTexImage2D( GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_FLOAT, (void*)data);
+    
+    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+    
+    delete data;
+    return cbTex;
 }
+
+}//end anonymous namespace
 
 
 Skybox::Skybox( const char* texture_base_path )
@@ -171,22 +219,24 @@ Skybox::init()
 
 
     //setup cubemap
-	createCubeMap();
+    createCubeMap();
+    //m_texture = createProceduralTexture();
     CHECK_GL;
     m_shader_prog = createSkyboxShader();
+    m_tex_location = glGetUniformLocation( m_shader_prog, "skyboxTexture" );
+
     CHECK_GL;
 }
 
 void
 Skybox::render( float* mvp, float* p, const float* bbMin, const float* bbMax )
 {
-    glDisable(GL_DEPTH_TEST);
+    //    glDisable(GL_DEPTH_TEST);
     glUseProgram( m_shader_prog );
     glBindVertexArray( m_vao );
     glActiveTexture( GL_TEXTURE0 );
-    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
+    glBindTexture( GL_TEXTURE_CUBE_MAP, m_texture );
     CHECK_GL;
-    glUniform1i( skybox_cube_map_location, 0 );
     float bbmin[3] = { -1.0, -1.0, -1.0 };
     float bbmax[3] = { 1.0, 1.0, 1.0 };
     glUniform3fv( 0, 1, bbmin );
@@ -195,11 +245,11 @@ Skybox::render( float* mvp, float* p, const float* bbMin, const float* bbMax )
     glUniformMatrix4fv( skybox_proj_location, 1, GL_FALSE, p );
     CHECK_GL;
     glDrawArrays( GL_TRIANGLES, 0, 36 );
-    glDrawArrays( GL_TRIANGLE_STRIP, 0, 3 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     CHECK_GL;
-    glActiveTexture( GL_TEXTURE0 );
-    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+    //glActiveTexture( GL_TEXTURE0 );
+    //glBindTexture( GL_TEXTURE_2D, 0 );
+    //    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
     glUseProgram( 0 );
     glBindVertexArray( 0 );
     CHECK_GL;
@@ -209,9 +259,12 @@ Skybox::render( float* mvp, float* p, const float* bbMin, const float* bbMax )
 void
 Skybox::createCubeMap( )
 {
-    glGenTextures( 1, &m_cubemap);
-    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
-    //    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemap );
+    glGenTextures( 1, &m_texture);
+    glBindTexture( GL_TEXTURE_CUBE_MAP, m_texture );
+    glTexParameterf( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    glTexParameterf( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+
+    //    glBindTexture( GL_TEXTURE_CUBE_MAP, m_texture );
     //hardcoding location of skybox images for now.
     //would be nice to just embed them in .exe or something, but will not add qtResource for it now.
     //will need image loading lib for this, using stb_image  
@@ -233,7 +286,7 @@ Skybox::createCubeMap( )
     {
         temp = stbi_load( img_names[i].c_str(), &x, &y, &n, 4 );
         format = GL_RGBA; //n == 4 ? GL_RGBA : GL_RGB;
-        glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_BYTE, (void*)temp );
+        glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)temp );
         //        glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_BYTE, (void*)temp );
 	
     }

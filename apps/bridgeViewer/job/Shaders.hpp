@@ -2,7 +2,7 @@
 
 
 const GLint skybox_position_location = 0;
-const GLint skybox_cube_map_location = 5;
+const GLint skybox_texture_location = 5;
 const GLint skybox_mvp_location = 7;
 const GLint skybox_proj_location = 6;
   
@@ -11,16 +11,18 @@ const char* skybox_fs = "#version 330\n\
     \n                                                \
     in vec3 texCoords;\n                              \
     \n                                                \
-    layout(location=5) uniform samplerCube skyboxCube;\n                 \
+//    uniform sampler2D skyboxTexture;\n                 \
+    uniform samplerCube skyboxTexture;\n                 \
     \n                                                \
     out vec4 colour;\n                                \
     \n                                                \
     void main(void)\n                                 \
     {\n                                               \
-    colour = texture( skyboxCube, texCoords );\n      \
+//    colour = texture( skyboxTexture, vec2(10.0, 10.0)  );\n      \
+    colour = texture( skyboxTexture, texCoords  );\n      \
 //    colour.r = 1.0f;\n                            \
 //    colour.g = 0.25f;\n                            \
-    colour.b = 1.0f;\n                            \
+    //colour.b += 0.5f;\n                            \
     colour.w = 1.0f;\n                                 \
     }\n";
 
@@ -60,7 +62,7 @@ void main(void){\n\
     float y = isTop() ? bbMax.y : bbMin.y;\n\
     float z = isFront() ? bbMax.z : bbMin.z;\n\
 \n\
-    texCoords = vec3(x, y, z);\n\
+    texCoords = vec3((x/2.0f)+0.5f, (y/2.0f)+0.5f, (z/2.0f)+0.5f);\n\
     gl_Position = vec4( x, y, z, 1.0f) ;\n\
 }\n\
 ";
