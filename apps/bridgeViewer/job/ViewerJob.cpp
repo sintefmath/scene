@@ -12,7 +12,7 @@
 
 #include "Skybox.hpp"
 
-#define skybox_texture_location "C:/Dependencies/skybox/humus/pond/"
+#define skybox_texture_location "../data/skybox/pond/"
 
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
