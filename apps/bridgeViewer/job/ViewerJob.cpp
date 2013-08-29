@@ -12,7 +12,7 @@
 
 #include "Skybox.hpp"
 
-#define skybox_texture_location "C:/Dependencies/skybox/"
+#define skybox_texture_location "C:/Dependencies/skybox/humus/pond/"
 
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
@@ -182,15 +182,15 @@ TiniaViewerJob::renderFrame( const std::string&  session,
     glBindFramebuffer( GL_FRAMEBUFFER, fbo );
     glClearColor(0.2, 0.3f, 0.1f, 0.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-//    m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
-//    m_glsl_renderlist->render();
+    m_skybox->render(viewer.modelviewMatrix.data(), viewer.projectionMatrix.data(), m_bbMin, m_bbMax );
+    m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
+    m_glsl_renderlist->render();
 
     // if( m_app_camera_node != NULL ) {
         // Render skybox last, making use of depth test to minimize overdraw
         // MVi,  viewer.modelviewMatrix.data() and viewer.projectionMatrix.data
-    glViewport(0,0,width,height);
-    m_skybox->render(viewer.modelviewMatrix.data(), viewer.projectionMatrix.data(), m_bbMin, m_bbMax );
+    //    glViewport(0,0,width,height);
+
                 
         //    }
 

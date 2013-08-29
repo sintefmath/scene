@@ -247,9 +247,8 @@ Skybox::render( float* mvp, float* p, const float* bbMin, const float* bbMax )
     glDrawArrays( GL_TRIANGLES, 0, 36 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     CHECK_GL;
-    //glActiveTexture( GL_TEXTURE0 );
-    //glBindTexture( GL_TEXTURE_2D, 0 );
-    //    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
     glUseProgram( 0 );
     glBindVertexArray( 0 );
     CHECK_GL;
@@ -269,16 +268,17 @@ Skybox::createCubeMap( )
     //would be nice to just embed them in .exe or something, but will not add qtResource for it now.
     //will need image loading lib for this, using stb_image  
 	
-    //names need to be skybox_[side].png, with side= [east, west, up, down, south, north]
+    //names need to be [pos||neg][xyz].jpg
     //ordering corresponding to GL_TEXTURE_CUBE_MAP_[side] ordering.
     int x,y,n;
     std::vector< std::string > img_names;
-    img_names.push_back( std::string(m_tex_base_path) + "skybox_east.jpg" );
-    img_names.push_back( std::string(m_tex_base_path) + "skybox_west.jpg" );
-    img_names.push_back( std::string(m_tex_base_path) + "skybox_up.jpg" );
-    img_names.push_back( std::string(m_tex_base_path) + "skybox_down.jpg" );
-    img_names.push_back( std::string(m_tex_base_path) + "skybox_south.jpg" );
-    img_names.push_back( std::string(m_tex_base_path) + "skybox_north.jpg" );
+
+    img_names.push_back( std::string(m_tex_base_path) + "posx.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "negx.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "posy.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "negy.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "posz.jpg" );
+    img_names.push_back( std::string(m_tex_base_path) + "negz.jpg" );
 	
     unsigned char* temp;
     int format;
