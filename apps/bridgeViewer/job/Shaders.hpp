@@ -11,26 +11,18 @@ const char* skybox_fs = "#version 330\n\
     \n                                                               \
     in vec3 texCoords;\n                                             \
     \n                                                               \
-//    uniform sampler2D skyboxTexture;\n                             \
     uniform samplerCube skyboxTexture;\n                             \
     \n                                                               \
     out vec4 colour;\n                                               \
     \n                                                               \
     void main(void)\n                                                \
     {\n                                                              \
-//    colour = texture( skyboxTexture, vec2(10.0, 10.0)  );\n        \
-    colour = texture( skyboxTexture, texCoords  );\n                 \
-//    colour.r = 1.0f;\n                                             \
-//    colour.g = 0.25f;\n                                            \
-    //colour.b += 0.5f;\n                                            \
-    colour.w = 1.0f;\n                                               \
+       colour = texture( skyboxTexture, texCoords  );\n              \
     }\n";
 
 const char* skybox_vs = "#version 330\n\
 #extension GL_ARB_explicit_uniform_location : require\n                 \
 \n                                                                      \
-layout(location=0) uniform vec3 bbMin;\n                                \
-layout(location=1) uniform vec3 bbMax;\n                                \
 layout(location=7) uniform mat4 modelView;\n                            \
 layout(location=6) uniform mat4 projection;\n                           \
 \n                                                                      \
@@ -58,9 +50,9 @@ bool isFront(void){\n                                                   \
 }\n                                                                     \
 \n                                                                      \
 void main(void){\n                                                      \
-    float x = isRight() ? bbMax.x : bbMin.x;\n                          \
-    float y = isTop() ? bbMax.y : bbMin.y;\n                            \
-    float z = isFront() ? bbMax.z : bbMin.z;\n                          \
+    float x = isRight() ? 1.0f : -1.0f;\n                          \
+    float y = isTop() ?   1.0f : -1.0f;\n                            \
+    float z = isFront() ? 1.0f : -1.0f;\n                          \
 \n                                                                      \
     mat4 mvI = modelView;                       \n                      \
     mvI[3][0] = 0.0f;                            \n                      \
@@ -69,7 +61,6 @@ void main(void){\n                                                      \
     mvI = inverse(mvI);                         \n                      \
     vec4 pos = vec4( x, y, z, 1.0f );           \n                      \
     texCoords = (mvI * inverse( projection ) * pos).xyz;            \n  \
-//    texCoords = vec3((x/2.0f)+0.5f, (y/2.0f)+0.5f, (z/2.0f)+0.5f);\n  \
     gl_Position = pos;\n                                                \
 }\n                                                                     \
 ";
