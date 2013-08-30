@@ -191,9 +191,9 @@ Skybox::render( float* mv, float* p )
     glUniformMatrix4fv( skybox_proj_location, 1, GL_FALSE, p );
     CHECK_GL;
     glm::mat4 modelview = glm::make_mat4x4(mv);
-    std::cerr << "modelview: " << glm::to_string(modelview) << std::endl;
+    //    std::cerr << "modelview: " << glm::to_string(modelview) << std::endl;
     glm::mat4 projection = glm::make_mat4x4(p);
-      std::cerr << "projection: " << glm::to_string(projection) << std::endl;
+    //      std::cerr << "projection: " << glm::to_string(projection) << std::endl;
     CHECK_GL;
     glDrawArrays( GL_TRIANGLES, 0, 3 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
