@@ -11,18 +11,12 @@ main( int argc, char** argv )
     Scene::initLogger( &argc, argv );
 
     std::list<std::string> files;
-//    for(int i=1; i<argc; i++ ) {
-//        files.push_back( argv[i] );
-//    }
-    std::cerr << "adding /tmp/bridgeTest.dae" << std::endl;
-    files.push_back("/tmp/bridgeTest.dae");
-    std::cerr << "added /tmp/bridgeTest.dae, will now load it" << std::endl;
+    std::cerr << "adding /usr/var/trell/apps/bridgeData/chemco.dae" << std::endl;
+    files.push_back("/usr/var/trell/apps/bridgeData/chemco.dae");
+    std::cerr << "added /usr/var/trell/apps/bridgeData/chemco.dae, will now load it" << std::endl;
     TiniaViewerJob job( files );
-    std::cerr << "has added files to TiniaViewer job, something should happen"<<std::endl;
     tinia::trell::IPCGLJobController controller;
     controller.setJob( &job );
-    std::cerr << "job added to controller, will now call run to enter mainloop"<<std::endl;
-    //controller.addScript( resources::cameramanipulator );
     controller.run( argc, argv );
     return 0;
 }
