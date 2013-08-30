@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <glm/gtx/string_cast.hpp>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -172,21 +172,28 @@ Skybox::init()
 
     CHECK_GL;
     m_shader_prog = createSkyboxShader();
-
     CHECK_GL;
+    fprintf(stderr, "finished skybox init");
 }
 
 void
-Skybox::render( float* mvp, float* p )
+Skybox::render( float* mv, float* p )
 {
-
+  fprintf(stderr, "rendering skybox\n");
     glUseProgram( m_shader_prog );
     glBindVertexArray( m_vao );
-    glActiveTexture( GL_TEXTURE0 );
+    glUniform1i( skybox_texture_location, 0 );
+    CHECK_GL;    glActiveTexture( GL_TEXTURE0 );
     glBindTexture( GL_TEXTURE_CUBE_MAP, m_texture );
     CHECK_GL;
-    glUniformMatrix4fv( skybox_mvp_location, 1, GL_FALSE, mvp );
+
+    glUniformMatrix4fv( skybox_mvp_location, 1, GL_FALSE, mv );
     glUniformMatrix4fv( skybox_proj_location, 1, GL_FALSE, p );
+    CHECK_GL;
+    glm::mat4 modelview = glm::make_mat4x4(mv);
+    std::cerr << "modelview: " << glm::to_string(modelview) << std::endl;
+    glm::mat4 projection = glm::make_mat4x4(p);
+      std::cerr << "projection: " << glm::to_string(projection) << std::endl;
     CHECK_GL;
     glDrawArrays( GL_TRIANGLES, 0, 3 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -204,6 +211,7 @@ Skybox::createCubeMap( )
 {
 
     glGenTextures( 1, &m_texture);
+    fprintf(stderr, "cube: tex name: %u\n", m_texture);
     glBindTexture( GL_TEXTURE_CUBE_MAP, m_texture );
     glTexParameterf( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
     glTexParameterf( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
@@ -225,11 +233,13 @@ Skybox::createCubeMap( )
     for(auto i = 0u; i < img_names.size(); ++i )
     {
         temp = stbi_load( img_names[i].c_str(), &x, &y, &n, 4 );
+	if(temp == NULL)
+	  fprintf(stderr, "temp couldn't load input %s, reason %s\n", img_names[i].c_str(), stbi_failure_reason() );
         format = GL_RGBA; //force it to 4 components
         glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)temp );
     }
 	
     glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
-
+    fprintf(stderr, "finished loading cubemap\n");
 }
 
