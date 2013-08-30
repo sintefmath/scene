@@ -272,7 +272,8 @@ IF(SCENE_TINIA)
     SOURCE_GROUP( "app-tiniaviewer" FILES ${APP_TINIA_VIEWER_HDR}
                                           ${APP_TINIA_VIEWER_SRC}
                                           ${APP_TINIA_VIEWER_DESKTOP_SRC}
-                                          ${APP_TINIA_VIEWER_CLOUD_SRC} )
+					  ${APP_TINIA_VIEWER_CLOUD_SRC} )
+					
     SET_SOURCE_FILES_PROPERTIES( ${APP_TINIA_VIEWER_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
 
     ADD_EXECUTABLE( tinia_desktop_viewer ${APP_TINIA_VIEWER_HDR}
@@ -289,7 +290,7 @@ IF(SCENE_TINIA)
                            ${Boost_SYSTEM_LIBRARY}
 			   ${TINIA_LIBRARIES}
                            ${PNG_LIBRARIES} )
-MESSAGE("tinia libs: ${TINIA_LIBRARIES}")
+
 
     FILE( GLOB APP_BRIDGE_VIEWER_HDR   "apps/bridgeViewer/job/*.h*" )
     FILE( GLOB APP_BRIDGE_VIEWER_SRC   "apps/bridgeViewer/job/*.c*" )
@@ -312,6 +313,24 @@ MESSAGE("tinia libs: ${TINIA_LIBRARIES}")
                            ${Boost_SYSTEM_LIBRARY}
                            ${TINIA_LIBRARIES}
                            ${PNG_LIBRARIES} )
+
+    IF(SCENE_TINIA_SERVER)
+      ADD_EXECUTABLE( tinia_cloud_viewer ${APP_TINIA_VIEWER_HDR}
+	                                 ${APP_TINIA_VIEWER_SRC}
+					 ${APP_TINIA_VIEWER_CLOUD_SRC} )
+      TARGET_LINK_LIBRARIES( tinia_cloud_viewer
+                             scene
+                             scene_glsl
+                             scene_collada
+                             ${SCENE_TINIA_LIB}
+                             ${PLATFORM_DEP_LIBS}
+                             ${LIBXML2_LIBRARIES}
+                             ${LOG4CXX_LIBRARIES}
+                             ${Boost_SYSTEM_LIBRARY}
+                             ${TINIA_LIBRARIES}
+                             ${PNG_LIBRARIES} )
+    ENDIF(SCENE_TINIA_SERVER)
+
 ENDIF(SCENE_TINIA)
 
 

@@ -8,6 +8,7 @@
 #include <scene/collada/Importer.hpp>
 #include <scene/tinia/Bridge.hpp>
 #include <scene/tools/BBoxTool.hpp>
+#include <scene/tools/ShaderGen.hpp>
 
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
@@ -142,7 +143,7 @@ TiniaViewerJob::renderFrame( const std::string&  session,
     }
     tinia::model::Viewer viewer;
     m_model->getElementValue( "viewer", viewer );
-    m_glsl_renderlist->setDefaultOutput( 0, 0, 0, width, height );
+    m_glsl_renderlist->setDefaultOutput( fbo, 0, 0, width, height );
 
     // Forward tinia projection matrix to app_camera
     if( m_app_camera != NULL ) {
@@ -157,7 +158,7 @@ TiniaViewerJob::renderFrame( const std::string&  session,
     }
 
     // Not all COLLADA files have buffer clearing set up
-    glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+    glBindFramebuffer( GL_FRAMEBUFFER, fbo );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
@@ -208,7 +209,7 @@ TiniaViewerJob::readFiles()
                   (it->substr( it->length()-4 ) == ".dae") ||
                   (it->substr( it->length()-4 ) == ".DAE") ) )
         {
-            importer.parse( *it );
+	  importer.parse( *it );
         }
     }
     m_files_to_read.clear();
@@ -223,17 +224,10 @@ TiniaViewerJob::readFiles()
     }
 
     // --- Check if any effects have missing GLSL/GLES2-profiles ---------------
-    for( size_t i=0; i<m_scene_db->library<Scene::Effect>().size(); i++ ) {
-        Scene::Effect* e = m_scene_db->library<Scene::Effect>().get( i );
-        if( e->profile( Scene::PROFILE_GLSL ) == NULL ) {
-            std::cerr << "Effect '" << e->id() << "' has no GLSL profile, trying to generate from COMMON profile.\n";
-            e->generate( Scene::PROFILE_GLSL );
-        }
-        if( e->profile( Scene::PROFILE_GLES2 ) == NULL ) {
-            std::cerr << "Effect '" << e->id() << "' has no GLES2 profile, trying to generate from COMMON profile.\n";
-            e->generate( Scene::PROFILE_GLES2 );
-        }
-    }
+	Scene::Tools::generateShadersFromCommon( *m_scene_db,
+		Scene::PROFILE_GLSL | 
+		Scene::PROFILE_GLES2 );
+    
 
 
     // --- Update bounding boxes of geometries ---------------------------------
