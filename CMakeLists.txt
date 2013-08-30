@@ -291,10 +291,10 @@ IF(SCENE_TINIA)
                            ${PNG_LIBRARIES} )
 MESSAGE("tinia libs: ${TINIA_LIBRARIES}")
 
-    FILE( GLOB APP_BRIDGE_VIEWER_HDR   "apps/bridgeviewer/job/*.h*" )
-    FILE( GLOB APP_BRIDGE_VIEWER_SRC   "apps/bridgeviewer/job/*.c*" )
-    SET( APP_BRIDGE_DESKTOP_VIEWER     "apps/bridgeviewer/main_desktop.cpp" )
-    SET( APP_BRIDGE_CLOUD_VIEWER       "apps/bridgeviewer/main_cloud.cpp" )
+    FILE( GLOB APP_BRIDGE_VIEWER_HDR   "apps/bridgeViewer/job/*.h*" )
+    FILE( GLOB APP_BRIDGE_VIEWER_SRC   "apps/bridgeViewer/job/*.c*" )
+    SET( APP_BRIDGE_DESKTOP_VIEWER     "apps/bridgeViewer/main_desktop.cpp" )
+    SET( APP_BRIDGE_CLOUD_VIEWER       "apps/bridgeViewer/main_cloud.cpp" )
     SET_SOURCE_FILES_PROPERTIES( ${APP_BRIDGE_VIEWER_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
     
     ADD_EXECUTABLE( bridge_desktop_viewer ${APP_BRIDGE_VIEWER_HDR}
