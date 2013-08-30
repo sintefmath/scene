@@ -329,6 +329,23 @@ IF(SCENE_TINIA)
                              ${Boost_SYSTEM_LIBRARY}
                              ${TINIA_LIBRARIES}
                              ${PNG_LIBRARIES} )
+			   
+    ADD_EXECUTABLE( bridge_cloud_viewer ${APP_BRIDGE_VIEWER_HDR}
+                           ${APP_BRIDGE_VIEWER_SRC}
+                           ${APP_BRIDGE_CLOUD_VIEWER} )
+
+    TARGET_LINK_LIBRARIES( bridge_cloud_viewer
+                           scene
+                           scene_glsl
+                           scene_collada
+                           ${SCENE_TINIA_LIB}
+                           ${PLATFORM_DEP_LIBS}
+                           ${LIBXML2_LIBRARIES}
+                           ${LOG4CXX_LIBRARIES}
+                           ${Boost_SYSTEM_LIBRARY}
+                           ${TINIA_LIBRARIES}
+                           ${PNG_LIBRARIES} )
+
     ENDIF(SCENE_TINIA_SERVER)
 
 ENDIF(SCENE_TINIA)
