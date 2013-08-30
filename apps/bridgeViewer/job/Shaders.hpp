@@ -11,7 +11,7 @@ const char* skybox_fs = "#version 330\n\
     \n                                                               \
     in vec3 texCoords;\n                                             \
     \n                                                               \
-    uniform samplerCube skyboxTexture;\n                             \
+    layout(location=5) uniform samplerCube skyboxTexture;\n                             \
     \n                                                               \
     out vec4 colour;\n                                               \
     \n                                                               \
@@ -37,6 +37,7 @@ void main(void){\n                                                      \
     mvI[3][0] = 0.0f;                            \n                      \
     mvI[3][1] = 0.0f;                            \n                      \
     mvI[3][2] = 0.0f;                            \n                      \
+    mvI[3][3] = 1.0f;                            \n                      \
     mvI = inverse(mvI);                         \n                      \
     vec4 pos = vec4( x, y, z, 1.0f );           \n                      \
     texCoords = (mvI * inverse( projection ) * pos).xyz;            \n  \
