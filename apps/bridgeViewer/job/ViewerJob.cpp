@@ -10,9 +10,10 @@
 #include <scene/tools/BBoxTool.hpp>
 #include <scene/tools/ShaderGen.hpp>
 
+#include "GLDebugMessages.hpp"
 #include "Skybox.hpp"
 
-#define skybox_texture_location "../data/skybox/pond/"
+#define skybox_texture_location "/usr/var/trell/apps/bridgeData/skybox/pond/"
 
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
@@ -134,6 +135,8 @@ bool
 TiniaViewerJob::initGL()
 {
     glewInit();
+    siut3::gl_tools::GLDebugMessages::setupGLDebugMessages();
+    siut3::gl_tools::GLDebugMessages::controlGLDebugMessages( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, 0, NULL, GL_FALSE);
     m_glsl_runtime = new Scene::Runtime::GLSLRuntime( *m_scene_db );
     m_glsl_renderlist = new Scene::Runtime::GLSLRenderList( *m_glsl_runtime );
 	m_skybox->init();
