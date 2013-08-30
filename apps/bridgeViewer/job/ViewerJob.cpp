@@ -13,7 +13,8 @@
 #include "GLDebugMessages.hpp"
 #include "Skybox.hpp"
 
-#define skybox_texture_location "/usr/var/trell/apps/bridgeData/skybox/pond/"
+#define skybox_texture_location "../data/skybox/pond/"
+//#define skybox_texture_location "/usr/var/trell/apps/bridgeData/skybox/pond/"
 
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
