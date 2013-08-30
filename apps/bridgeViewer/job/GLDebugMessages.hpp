@@ -197,7 +197,7 @@ bool setupGLDebugMessages( void* outputStream = &std::cerr )
   if( glewIsSupported( "GL_KHR_debug" ) )
     {
       glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS );
-      glDebugMessageCallback( &impl::debugLogger, outputStream );
+      glDebugMessageCallback( (GLDEBUGPROC)&impl::debugLogger, outputStream );
       glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE );
     }
   else 
@@ -206,7 +206,7 @@ bool setupGLDebugMessages( void* outputStream = &std::cerr )
     {
       *(reinterpret_cast<std::ostream*>( outputStream )) << "KHR_DEBUG not supported, trying ARB extension GL_ARB_DEBUG_OUTPUT instead... " << std::endl;
       glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB );
-      glDebugMessageCallbackARB( &impl::debugLoggerARB, outputStream );
+      glDebugMessageCallbackARB( (GLDEBUGPROC)&impl::debugLoggerARB, outputStream );
       glDebugMessageControlARB( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE );
     }
   else
