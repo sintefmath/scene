@@ -10,11 +10,14 @@
 #include <scene/tools/BBoxTool.hpp>
 #include <scene/tools/ShaderGen.hpp>
 
+#ifdef DEBUG
 #include "GLDebugMessages.hpp"
+#endif
+
 #include "Skybox.hpp"
 
-#define skybox_texture_location "../data/skybox/pond/"
-//#define skybox_texture_location "/usr/var/trell/apps/bridgeData/skybox/pond/"
+//#define skybox_texture_location "../data/skybox/pond/"
+#define skybox_texture_location "/usr/var/trell/apps/bridgeData/skybox/pond/"
 
 static const std::string visual_scenes_key      = "visual_scenes";
 static const std::string camera_instances_key   = "camera_instances";
@@ -136,21 +139,13 @@ bool
 TiniaViewerJob::initGL()
 {
     glewInit();
+#ifdef DEBUG
     siut3::gl_tools::GLDebugMessages::setupGLDebugMessages();
     siut3::gl_tools::GLDebugMessages::controlGLDebugMessages( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, 0, NULL, GL_FALSE);
+#endif
     m_glsl_runtime = new Scene::Runtime::GLSLRuntime( *m_scene_db );
     m_glsl_renderlist = new Scene::Runtime::GLSLRenderList( *m_glsl_runtime );
-	m_skybox->init();
-	//testing if I can get the damn bbox
-	//Scene::Runtime::Resolver resolver( *m_scene_db, Scene::PROFILE_GLSL, "" );
-	//Scene::Runtime::RenderList renderlist( resolver );
-	//renderlist.build( m_visual_scenes[ m_visual_scene ] );
-	//
-	//Scene::Value bb_min, bb_max;
-	//if( Scene::Tools::visualSceneExtents( bb_min, bb_max, renderlist ) ) {
-	//	m_bbMax = bb_max.floatData();
-	//	m_bbMin = bb_min.floatData();
-	//}
+    m_skybox->init();
     return true;
 }
 
@@ -188,12 +183,8 @@ TiniaViewerJob::renderFrame( const std::string&  session,
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_skybox->render(viewer.modelviewMatrix.data(), viewer.projectionMatrix.data() );
-    
     m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );
     m_glsl_renderlist->render();
-
-
-
     return true;
 }
 
