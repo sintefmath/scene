@@ -11,8 +11,6 @@
 
 #include "stb_image.h"
 
-#define CHECK_GL do { printGLError( __FILE__, __LINE__ ); } while(0)
-
 namespace {
 
 #include "Shaders.hpp"
@@ -112,32 +110,6 @@ GLuint createSkyboxShader()
     glDeleteShader( fs );
     return shader_prog;
 }
-
-
-inline void printGLError(std::string fname, int line)
-{   
-    size_t count = 0;
-    GLenum error = glGetError();
-    if( error != GL_NO_ERROR ) {
-        std::stringstream s;
-        s << fname << '@' << line << ": OpenGL error: "; 
-        
-        do {
-            switch( error ) {
-            case GL_INVALID_ENUM: s << "GL_INVALID_ENUM "; break;
-            case GL_INVALID_VALUE: s << "GL_INVALID_VALUE "; break;
-            case GL_INVALID_OPERATION: s << "GL_INVALID_OPERATION "; break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION: s << "GL_INVALID_FRAMEBUFFER_OPERATION "; break;
-            case GL_OUT_OF_MEMORY: s << "GL_OUT_OF_MEMORY"; break;
-            default:
-                s << "0x" << std::hex << error << std::dec << " "; break;
-            }
-            error = glGetError();
-            ++count;
-        } while( error != GL_NO_ERROR && count < 10 );
-        std::cerr <<  s.str() << std::endl;
-    }
-}
     
 }//end anonymous namespace
 
@@ -170,40 +142,30 @@ Skybox::init()
     //setup cubemap
     createCubeMap();
 
-    CHECK_GL;
     m_shader_prog = createSkyboxShader();
-    CHECK_GL;
     fprintf(stderr, "finished skybox init");
 }
 
 void
 Skybox::render( float* mv, float* p )
 {
-  fprintf(stderr, "rendering skybox\n");
+    glDisable( GL_DEPTH_TEST);
     glUseProgram( m_shader_prog );
     glBindVertexArray( m_vao );
     glUniform1i( skybox_texture_location, 0 );
-    CHECK_GL;    glActiveTexture( GL_TEXTURE0 );
+    glActiveTexture( GL_TEXTURE0 );
     glBindTexture( GL_TEXTURE_CUBE_MAP, m_texture );
-    CHECK_GL;
 
     glUniformMatrix4fv( skybox_mvp_location, 1, GL_FALSE, mv );
     glUniformMatrix4fv( skybox_proj_location, 1, GL_FALSE, p );
-    CHECK_GL;
-    glm::mat4 modelview = glm::make_mat4x4(mv);
-    //    std::cerr << "modelview: " << glm::to_string(modelview) << std::endl;
-    glm::mat4 projection = glm::make_mat4x4(p);
-    //      std::cerr << "projection: " << glm::to_string(projection) << std::endl;
-    CHECK_GL;
     glDrawArrays( GL_TRIANGLES, 0, 3 );
+
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    CHECK_GL;
     glActiveTexture( GL_TEXTURE0 );
     glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
     glUseProgram( 0 );
     glBindVertexArray( 0 );
-    CHECK_GL;
-
+    glEnable( GL_DEPTH_TEST );
 }
 
 void
@@ -232,10 +194,10 @@ Skybox::createCubeMap( )
     int format;
     for(auto i = 0u; i < img_names.size(); ++i )
     {
-        temp = stbi_load( img_names[i].c_str(), &x, &y, &n, 4 );
-	if(temp == NULL)
-	  fprintf(stderr, "temp couldn't load input %s, reason %s\n", img_names[i].c_str(), stbi_failure_reason() );
-        format = GL_RGBA; //force it to 4 components
+        temp = stbi_load( img_names[i].c_str(), &x, &y, &n, 4 ); //forced to 4 components
+        if(temp == NULL)
+          fprintf(stderr, "temp couldn't load input %s, reason %s\n", img_names[i].c_str(), stbi_failure_reason() );
+        format = GL_RGBA;
         glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)temp );
     }
 	
