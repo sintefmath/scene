@@ -159,6 +159,7 @@ TiniaViewerJob::renderFrame( const std::string&  session,
 
     // Not all COLLADA files have buffer clearing set up
     glBindFramebuffer( GL_FRAMEBUFFER, fbo );
+    glClearColor( 0.2, 0.3, 0.4, 0.0 );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_glsl_renderlist->build( m_visual_scenes[ m_visual_scene ] );

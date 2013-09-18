@@ -494,7 +494,7 @@ protected:
                                                    static_cast<float>( 0.5+0.5*cos(0.7*t) ) ) );
         }
 
-        glClearColor( 0.2, 0.3, 0.4, 0.5 );
+        glClearColor( 0.2, 0.3, 0.4, 0.0 );
 
         m_renderlist.build( m_onscreen_visual_scenes[ m_onscreen_scene ] );
         if( m_stereo ) {
