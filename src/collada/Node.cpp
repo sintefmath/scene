@@ -68,31 +68,33 @@ Importer::parseNode( Node*           parent_node,
 
     Asset node_asset = parent_asset;
 
+    
+    // Parse child nodes. We are quite forgiving wrt the order of xml nodes, as
+    // some exporters create illegal COLLADA.
+    
+    
     bool success = true;
-    xmlNodePtr n = node_node->children;
-    if( checkNode( n, "asset" ) ) {
-        Asset asset;
-        if( parseAsset( asset, n ) ) {
-            node_asset = asset;
+    bool first_profile_include = true;
+
+    
+    for( xmlNodePtr n = node_node->children; n != NULL; n = n->next ) {
+        if( checkNode( n, "asset" ) ) {
+            Asset asset;
+            if( parseAsset( asset, n ) ) {
+                node_asset = asset;
+            }
+            else {
+                SCENELOG_WARN( log, context << "failed to parse <asset>" );
+            }
         }
-        else {
-            SCENELOG_ERROR( log, context << "failed to parse <asset>" );
-            success = false;
-        }
-        n = n->next;
-    }
-
-
-    // transforms
-    for( ; n != NULL; n = n->next ) {
-
-        string sid = attribute( n, "sid" );
-        std::vector<float> values;
-
-        if( checkNode( n, "lookat" ) ) {
+        // --- <lookat> --------------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "lookat" ) ) {
             SCENELOG_WARN( log, context << "<lookat> not implemented.");
         }
-        else if( checkNode( n, "matrix" ) ) {
+        // --- <matrix> --------------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "matrix" ) ) {
+            string sid = attribute( n, "sid" );
+            std::vector<float> values(16);
             if( !parseBodyAsFloats( values, n, 16 ) ) {
                 SCENELOG_ERROR( log, context << "malformed <matrix>, ignoring." );
                 success = false;
@@ -112,7 +114,10 @@ Importer::parseNode( Node*           parent_node,
                 node->transformSetMatrix( node->transformAdd(sid), m );
             }
         }
-        else if( checkNode( n, "rotate" ) ) {
+        // --- <rotate> --------------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "rotate" ) ) {
+            string sid = attribute( n, "sid" );
+            std::vector<float> values(4);
             if( !parseBodyAsFloats( values, n, 4 ) ) {
                 SCENELOG_ERROR( log, context << "malformed <rotate>, ignoring." );
                 success = false;
@@ -125,14 +130,25 @@ Importer::parseNode( Node*           parent_node,
                         sid = "";
                     }
                 }
+                if( values[0]*values[0] + values[1]*values[1] + values[2]*values[2] < std::numeric_limits<float>::epsilon() ) {
+                    SCENELOG_WARN( log, "Degenerate rotation axis, using x-axis." );
+                    values[0] = 1.f;
+                    values[1] = 0.f;
+                    values[2] = 0.f;
+                } 
+                
+                
                 node->transformSetRotate( node->transformAdd( sid ),
                                           values[0],
                                           values[1],
                                           values[2],
                                           (M_PI/180.f)*values[3] );
-            }
+            }        
         }
-        else if( checkNode( n, "scale" ) ) {
+        // --- <scale> ---------------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "scale" ) ) {
+            string sid = attribute( n, "sid" );
+            std::vector<float> values(4);
             if( !parseBodyAsFloats( values, n, 3 ) ) {
                 SCENELOG_ERROR( log, context << "malformed <scale>, ignoring." );
                 success = false;
@@ -151,10 +167,14 @@ Importer::parseNode( Node*           parent_node,
                                          values[2] );
             }
         }
+        // --- <skew> ----------------------------------------------------------
         else if( xmlStrEqual( n->name, BAD_CAST "skew" ) ) {
             SCENELOG_WARN( log, context << "<skew> not implemented.");
         }
+        // --- <translate> -----------------------------------------------------
         else if( xmlStrEqual( n->name, BAD_CAST "translate" ) ) {
+            string sid = attribute( n, "sid" );
+            std::vector<float> values(3);
             if( !parseBodyAsFloats(values, n, 3) ) {
                 SCENELOG_ERROR( log, context << "malformed <translate>, ignoring." );
                 success = false;
@@ -171,120 +191,111 @@ Importer::parseNode( Node*           parent_node,
                                              values[0],
                                              values[1],
                                              values[2] );
+            }        }
+        // --- <instance_camera> -----------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "instance_camera" ) ) {
+            string sid = attribute( n, "sid" );
+            string ref = cleanRef( attribute( n, "url" ) );
+            if( !ref.empty() ) {
+                node->addInstanceCamera( sid, ref );
+            }        }
+        // --- <instance_controller> -------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "instance_controller" ) ) {
+            SCENELOG_WARN( log, context << "<instance_controller> not implemented" );
+        }
+        // --- <instance_geometry> ---------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "instance_geometry" ) ) {
+            if( !parseInstanceGeometry( node, n ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <instance_geometry>" );
+                success = false;
             }
         }
-        else {
-            break;
+        // --- <instance_light> ------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "instance_light" ) ) {
+            string sid = attribute( n, "sid" );
+            string ref = cleanRef( attribute( n, "url" ) );
+            if( !ref.empty() ) {
+                node->addInstanceLight( ref, sid );
+            }
         }
-    }
-
-    for( ; checkNode(n, "instance_camera"); n = n->next ) {
-        string sid = attribute( n, "sid" );
-        string ref = cleanRef( attribute( n, "url" ) );
-        if( !ref.empty() ) {
-            node->addInstanceCamera( sid, ref );
+        // --- <instance_node> -------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "instance_node" ) ) {
+            string sid = attribute( n, "sid" );
+            string name = attribute( n, "name" );
+            string url = attribute( n, "url" );
+            if( url.size() > 0 && url[0] == '#' ) {
+                url = url.substr(1);
+            }
+            string proxy = attribute( n, "proxy" );
+            if( proxy.size() > 0 && proxy[0] == '#' ) {
+                proxy = proxy.substr(1);
+            }
+    
+            if( url.empty() ) {
+                SCENELOG_ERROR( log, "Required <instance_node> attribute 'url' empty." );
+                success = false;
+            }
+            else {
+                node->addInstanceNode( sid, name, url, proxy );
+            }
         }
-    }
-
-    for( ; checkNode(n, "instance_controller"); n = n->next ) {
-        SCENELOG_WARN( log, context << "<instance_controller> not implemented" );
-    }
-
-    for( ; checkNode( n, "instance_geometry" ); n = n->next ) {
-        if( !parseInstanceGeometry( node, n ) ) {
-            SCENELOG_ERROR( log, "Failed to parse <instance_geometry>" );
-            success = false;
+        // --- <node> ----------------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "node" ) ) {
+            if( !parseNode( node, node_asset, n ) ) {
+                SCENELOG_ERROR( log, "Failed to parse <node>" );
+                success = false;
+            }
         }
-    }
-
-    for( ; checkNode( n, "instance_light"); n = n->next ) {
-        string sid = attribute( n, "sid" );
-        string ref = cleanRef( attribute( n, "url" ) );
-        if( !ref.empty() ) {
-            node->addInstanceLight( ref, sid );
-        }
-    }
-
-    for( ; checkNode( n, "instance_node" ); n = n->next ) {
-        string sid = attribute( n, "sid" );
-        string name = attribute( n, "name" );
-        string url = attribute( n, "url" );
-        if( url.size() > 0 && url[0] == '#' ) {
-            url = url.substr(1);
-        }
-        string proxy = attribute( n, "proxy" );
-        if( proxy.size() > 0 && proxy[0] == '#' ) {
-            proxy = proxy.substr(1);
-        }
-
-        if( url.empty() ) {
-            SCENELOG_ERROR( log, "Required <instance_node> attribute 'url' empty." );
-            success = false;
-        }
-        else {
-            node->addInstanceNode( sid, name, url, proxy );
-        }
-    }
-
-    for( ; checkNode( n, "node" ); n = n->next ) {
-        if( !parseNode( node, node_asset, n ) ) {
-            SCENELOG_ERROR( log, "Failed to parse <node>" );
-            success = false;
-        }
-    }
-
-    bool first_profile_include = true;
-
-    while( checkNode( n, "extra" ) ) {
-        xmlNodePtr m = n->children;
-        if( checkNode( m, "asset" ) ) {
-            // ignore
-            m = m->next;
-        }
-        for( ; checkNode( m, "technique" ); m = m->next ) {
-            const string profile = attribute( m, "profile" );
-            if( profile == "Scene" || profile == "scene" ) {
-                xmlNodePtr o = m->children;
-                for( ; o != NULL; o = o->next ) {
-                    if( checkNode( o, "profile" ) ) {
-                        string profile = getBody(o);
-                        if( first_profile_include ) {
-                            node->includeInNoProfiles();
-                            first_profile_include = false;
-                        }
-                        if( profile == "BRIDGE" ) {
-                            node->includeInProfile( PROFILE_BRIDGE );
-                        }
-                        else if( profile == "CG" ) {
-                            node->includeInProfile( PROFILE_CG );
-                        }
-                        else if( profile == "COMMON" ) {
-                            node->includeInProfile( PROFILE_COMMON );
-                        }
-                        else if( profile == "GLES" ) {
-                            node->includeInProfile( PROFILE_GLES );
-                        }
-                        else if( profile == "GLES2" ) {
-                            node->includeInProfile( PROFILE_GLES2 );
-                        }
-                        else if( profile == "GLSL" ) {
-                            node->includeInProfile( PROFILE_GLSL );
-                        }
-                        else {
-                            SCENELOG_ERROR( log, "Profile specified '" << profile << "' not recognized." );
+        // --- <extra> ---------------------------------------------------------
+        else if( xmlStrEqual( n->name, BAD_CAST "extra" ) ) {
+            xmlNodePtr m = n->children;
+            if( checkNode( m, "asset" ) ) {
+                // ignore
+                m = m->next;
+            }
+            for( ; checkNode( m, "technique" ); m = m->next ) {
+                const string profile = attribute( m, "profile" );
+                if( profile == "Scene" || profile == "scene" ) {
+                    xmlNodePtr o = m->children;
+                    for( ; o != NULL; o = o->next ) {
+                        if( checkNode( o, "profile" ) ) {
+                            string profile = getBody(o);
+                            if( first_profile_include ) {
+                                node->includeInNoProfiles();
+                                first_profile_include = false;
+                            }
+                            if( profile == "BRIDGE" ) {
+                                node->includeInProfile( PROFILE_BRIDGE );
+                            }
+                            else if( profile == "CG" ) {
+                                node->includeInProfile( PROFILE_CG );
+                            }
+                            else if( profile == "COMMON" ) {
+                                node->includeInProfile( PROFILE_COMMON );
+                            }
+                            else if( profile == "GLES" ) {
+                                node->includeInProfile( PROFILE_GLES );
+                            }
+                            else if( profile == "GLES2" ) {
+                                node->includeInProfile( PROFILE_GLES2 );
+                            }
+                            else if( profile == "GLSL" ) {
+                                node->includeInProfile( PROFILE_GLSL );
+                            }
+                            else {
+                                SCENELOG_ERROR( log, "Profile specified '"
+                                                << profile
+                                                << "' not recognized." );
+                            }
                         }
                     }
                 }
             }
         }
-        n = n->next;
+        else {
+            SCENELOG_WARN( log, context << "unexpected node <" << reinterpret_cast<const char*>( n->name ) << ">." );
+        }
     }
-
-
-    for( ; n != NULL; n = n->next ) {
-        SCENELOG_WARN( log, context << "unexpected node <" << reinterpret_cast<const char*>( n->name ) << ">." );
-    }
-
 
     node->setAsset( node_asset );
     return success;
