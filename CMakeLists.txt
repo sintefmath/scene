@@ -291,6 +291,29 @@ IF(SCENE_TINIA)
 			   ${TINIA_LIBRARIES}
                            ${PNG_LIBRARIES} )
 
+
+    FILE( GLOB APP_BRIDGE_VIEWER_HDR   "apps/bridgeViewer/job/*.h*" )
+    FILE( GLOB APP_BRIDGE_VIEWER_SRC   "apps/bridgeViewer/job/*.c*" )
+    SET( APP_BRIDGE_DESKTOP_VIEWER     "apps/bridgeViewer/main_desktop.cpp" )
+    SET( APP_BRIDGE_CLOUD_VIEWER       "apps/bridgeViewer/main_cloud.cpp" )
+    SET_SOURCE_FILES_PROPERTIES( ${APP_BRIDGE_VIEWER_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
+    
+    ADD_EXECUTABLE( bridge_desktop_viewer ${APP_BRIDGE_VIEWER_HDR}
+                                          ${APP_BRIDGE_VIEWER_SRC}
+                                          ${APP_BRIDGE_DESKTOP_VIEWER} )
+
+    TARGET_LINK_LIBRARIES( bridge_desktop_viewer
+                           scene
+                           scene_glsl
+                           scene_collada
+                           ${SCENE_TINIA_LIB}
+                           ${PLATFORM_DEP_LIBS}
+                           ${LIBXML2_LIBRARIES}
+                           ${LOG4CXX_LIBRARIES}
+                           ${Boost_SYSTEM_LIBRARY}
+                           ${TINIA_LIBRARIES}
+                           ${PNG_LIBRARIES} )
+
     IF(SCENE_TINIA_SERVER)
       ADD_EXECUTABLE( tinia_cloud_viewer ${APP_TINIA_VIEWER_HDR}
 	                                 ${APP_TINIA_VIEWER_SRC}
@@ -306,7 +329,25 @@ IF(SCENE_TINIA)
                              ${Boost_SYSTEM_LIBRARY}
                              ${TINIA_LIBRARIES}
                              ${PNG_LIBRARIES} )
+			   
+    ADD_EXECUTABLE( bridge_cloud_viewer ${APP_BRIDGE_VIEWER_HDR}
+                           ${APP_BRIDGE_VIEWER_SRC}
+                           ${APP_BRIDGE_CLOUD_VIEWER} )
+
+    TARGET_LINK_LIBRARIES( bridge_cloud_viewer
+                           scene
+                           scene_glsl
+                           scene_collada
+                           ${SCENE_TINIA_LIB}
+                           ${PLATFORM_DEP_LIBS}
+                           ${LIBXML2_LIBRARIES}
+                           ${LOG4CXX_LIBRARIES}
+                           ${Boost_SYSTEM_LIBRARY}
+                           ${TINIA_LIBRARIES}
+                           ${PNG_LIBRARIES} )
+
     ENDIF(SCENE_TINIA_SERVER)
+
 ENDIF(SCENE_TINIA)
 
 
