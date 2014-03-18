@@ -149,7 +149,7 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(
     ${GLM_INCLUDE_DIR}
-    ${TINIA_INCLUDE_DIR}
+    ${TINIA_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIR}
     ${GLEW_INCLUDE_DIR}
     ${Freeglut_INCLUDE_DIR}
@@ -256,6 +256,7 @@ TARGET_LINK_LIBRARIES( filter
                        scene
                        scene_collada
                        ${SCENE_TINIA_LIB}
+                       ${TINIA_LIBRARIES}                                          
                        ${tinia_RenderList_LIBRARY}
                        ${PLATFORM_DEP_LIBS}
                        ${LIBXML2_LIBRARIES}
@@ -263,6 +264,7 @@ TARGET_LINK_LIBRARIES( filter
                        ${Boost_SYSTEM_LIBRARY}
                        ${PNG_LIBRARIES}
 )
+MESSAGE("libxml2lib: ${LIBXML2_LIBRARIES}")
 # --- Tinia viewer app --------------------------------------------------------
 IF(SCENE_TINIA)
     FILE( GLOB APP_TINIA_VIEWER_HDR   "apps/tiniaviewer/job/*.hpp" )
