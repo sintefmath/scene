@@ -13,13 +13,13 @@
 #include <GL/freeglut.h>
 #endif
 
+#include <iostream>
 #include <stdexcept>
 #include <algorithm>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include <siut2/dsrv/FreeglutWindow.h>
 
 #include <scene/DataBase.hpp>
 #include <scene/collada/Importer.hpp>
@@ -41,6 +41,7 @@
 #include <tinia/renderlist/XMLWriter.hpp>
 #endif
 
+#include "ViewManipulator.hpp"
 
 
 using std::string;
@@ -50,91 +51,31 @@ using std::runtime_error;
 #define STEREO
 //#define USE_MATRIX
 
-class ViewerApp : public siut2::dsrv::FreeglutWindow
+
+
+class ViewerApp
 {
 public:
-    ViewerApp( int* argc, char** argv )
-        : FreeglutWindow(), //FreeglutWindow( argc, argv, true, "Scene::Viewer" ),
-          m_runtime( m_db ),
+    ViewerApp( const std::vector<std::string>& files,
+               bool stereo,
+               bool torture,
+               bool auto_shader,
+               bool auto_flatten,
+               float scale )
+        : m_runtime( m_db ),
           m_renderlist( m_runtime ),
+          m_viewer( glm::vec3(-scale), glm::vec3(scale) ),
 #ifdef SCENE_TINIA
           m_exporter_runtime( m_db, Scene::PROFILE_GLES2, "WebGL" ),
 #endif
-          m_stereo( false ),
-          m_torture( false ),
-          m_auto_shader( true ),
-          m_auto_flatten( true )
+          m_stereo( stereo ),
+          m_torture( torture ),
+          m_auto_shader( auto_shader ),
+          m_auto_flatten( auto_flatten ),
+          m_source_files( files ),
+          m_onscreen_scene( 0 )
     {
-        glutInitWindowSize( 960, 512 );
-        float scale = 1.0;
-        for(int i=1; i<*argc; i++) {
-            string param( argv[i] );
-            if( param == "--stereo" ) {
-                m_stereo = true;
-            }
-            else if( param == "--torture" ) {
-                m_torture = true;
-            }
-            else if( param == "--auto-shader" ) {
-                m_auto_shader = true;
-            }
-            else if( param == "--no-auto-shader" ) {
-                m_auto_shader = false;
-            }
-            else if( param == "--auto-flatten" ) {
-                m_auto_flatten = true;
-            }
-            else if( param == "--no-auto-flatten" ) {
-                m_auto_flatten = false;
-            }
-            else if( param.length() > 7 && (param.substr( param.length()-7 ) == ".config" ) ) {
-                // skip
-            }
-            else if( param.length() > 4 && (param.substr( param.length()-4 ) == ".xml" ) ) {
-                m_source_files.push_back( argv[i] );
-            }
-            else if(param.length() > 4 && (param.substr( param.length()-4 ) == ".dae"  ) ) {
-                m_source_files.push_back( argv[i] );
-            }
-            else if(param.length() > 4 && (param.substr( param.length()-4 ) == ".DAE"  ) ) {
-                m_source_files.push_back( argv[i] );
-            }
-            else {
-                scale = static_cast<float>( atof( param.c_str() ) );
-                if( scale == 0.0f ) {
-                    scale = 1.0f;
-                }
-            }
-        }
-
-        if( m_stereo ) {
-            setUpMixedModeContext( argc, argv, "ViewerApp", GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STEREO );
-        }
-        else {
-            setUpMixedModeContext( argc, argv, "ViewerApp", GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH );
-        }
-        glm::vec3 bb_min( -scale, -scale, -scale );
-        glm::vec3 bb_max( scale, scale, scale );
-
-        init( bb_min, bb_max );
-
-        /*if( m_stereo ) {
-            setUpContext( "Stereo rendering",
-                         CONTEXT_SPEC_DISPLAY_MODE, GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STEREO,
-                         CONTEXT_SPEC_END );
-        }
-        else {
-            setUpContext( "Non-stereo rendering", CONTEXT_SPEC_END );
-        }
-
-        init( BBox3f( Vec3f( -scale, -scale, -scale ),
-                      Vec3f(  scale,  scale,  scale ) ) );
-
-*/
-        m_onscreen_scene = 0;
         setup();
-
-        setFpsVisibility( true );
     }
 
     void
@@ -184,32 +125,10 @@ public:
 #endif
     }
 
-protected:
-    Scene::DataBase                     m_db;
-    Scene::Runtime::GLSLRuntime         m_runtime;
-    Scene::Runtime::GLSLRenderList      m_renderlist;
-
-#ifdef SCENE_TINIA
-    Scene::Tinia::Bridge          m_exporter_runtime;
-#endif
-    Scene::Camera*                      m_app_camera;
-    Scene::Node*                        m_app_camera_node;
-    Scene::Camera*                      m_slave_camera;
-    Scene::Node*                        m_slave_camera_node;
-
-    bool                                m_stereo;
-    bool                                m_torture;
-    bool                                m_auto_shader;
-    bool                                m_auto_flatten;
-    std::vector<std::string>            m_source_files;
-    std::vector<std::string>            m_onscreen_visual_scenes;
-    size_t                              m_onscreen_scene;
-
-    struct CameraInstance {
-        Scene::Node*                    m_node;
-        Scene::Camera*                  m_camera;
-    };
-    std::vector<CameraInstance>         m_camera_instances;
+    ViewManipulator&
+    viewer()
+    { return m_viewer; }
+    
 
     /** Run through nodes and find instances of cameras. */
     void
@@ -270,14 +189,14 @@ protected:
             cam_path[i] = NULL;
         }
         const Scene::Value* M = tc.pathTransformInverseMatrix( cam_path );
-        tc.update( m_viewer->getWindowSize()[0],
-                   m_viewer->getWindowSize()[1] );
+        tc.update( m_viewer.getWindowSize()[0],
+                   m_viewer.getWindowSize()[1] );
 
         // push projection and orientation to viewer
         glm::mat4 GM, GP;
         std::copy_n( P->floatData(), 16, glm::value_ptr( GP ) );
         std::copy_n( M->floatData(), 16, glm::value_ptr( GM ) );
-        m_viewer->setCamera( GM, GP, false );
+        m_viewer.setCamera( GM, GP, false );
     }
 
 
@@ -400,13 +319,13 @@ protected:
     {
         Scene::Value bb_min, bb_max;
         if( Scene::Tools::visualSceneExtents( bb_min, bb_max, m_renderlist.renderList() ) ) {
-            m_viewer->updateViewVolume( glm::vec3( bb_min.floatData()[0],
+            m_viewer.updateViewVolume( glm::vec3( bb_min.floatData()[0],
                                                    bb_min.floatData()[1],
                                                    bb_min.floatData()[2] ),
                                         glm::vec3( bb_max.floatData()[0],
                                                    bb_max.floatData()[1],
                                                    bb_max.floatData()[2] ) );
-            m_viewer->viewAll();
+            m_viewer.viewAll();
             std::cerr << "Bounding box: ["
                       << bb_min.floatData()[0] << ", "
                       << bb_min.floatData()[1] << ", "
@@ -431,8 +350,9 @@ protected:
     void
     render()
     {
-        CHECK_GL;
-
+        // make sure that we have no errors on entering.
+        while( glGetError() != GL_NO_ERROR ) {}
+        
         if( m_onscreen_visual_scenes.empty() ) {
             return;
         }
@@ -467,9 +387,9 @@ protected:
         m_app_camera_node->transformSetMatrix( m_app_camera_node->transformIndexBySid( "matrix" ), M );
 #else
         if( m_app_camera != NULL ) {
-            glm::vec2 near_far = m_viewer->getNearFarPlanes();
-            float fov_y = m_viewer->getFieldOfViewY()*(M_PI/180.f);
-            float fov_x = 2.0 * atanf( tan(0.5*fov_y)*m_viewer->getAspectRatio() );
+            glm::vec2 near_far = m_viewer.getNearFarPlanes();
+            float fov_y = m_viewer.getFieldOfViewY()*(M_PI/180.f);
+            float fov_x = 2.0 * atanf( tan(0.5*fov_y)*m_viewer.getAspectRatio() );
             m_app_camera->setPerspective( fov_x,
                                           fov_y,
                                           -near_far.x,
@@ -477,9 +397,9 @@ protected:
         }
         // The positioning and orientation of the camera in scene is done using
         // a node with a lookat transform.
-        glm::vec3 up = glm::vec3( 0.f, 1.f, 0.f ) * m_viewer->getOrientation();
-        glm::vec3 eye = m_viewer->getCurrentViewPoint();
-        glm::vec3 coi = m_viewer->getCenterOfInterest();
+        glm::vec3 up = glm::vec3( 0.f, 1.f, 0.f ) * m_viewer.getOrientation();
+        glm::vec3 eye = m_viewer.getCurrentViewPoint();
+        glm::vec3 coi = m_viewer.getCenterOfInterest();
         m_app_camera_node->transformSetLookAt( m_app_camera_node->transformIndexBySid( "lookat" ),
                                               eye.x, eye.y, eye.z,
                                               coi.x, coi.y, coi.z,
@@ -513,20 +433,255 @@ protected:
         else {
             m_renderlist.render( );
         }
-        CHECK_GL;
-//        exit(0);
+
+        GLenum error = glGetError();
+        while( error != GL_NO_ERROR ) {
+            std::cerr << "At end of display, got GL error " << std::hex << error << std::endl;
+        }
         glutPostRedisplay();
     }
 
+protected:
+    Scene::DataBase                     m_db;
+    Scene::Runtime::GLSLRuntime         m_runtime;
+    Scene::Runtime::GLSLRenderList      m_renderlist;
+    ViewManipulator              m_viewer;
+
+#ifdef SCENE_TINIA
+    Scene::Tinia::Bridge                m_exporter_runtime;
+#endif
+    Scene::Camera*                      m_app_camera;
+    Scene::Node*                        m_app_camera_node;
+    Scene::Camera*                      m_slave_camera;
+    Scene::Node*                        m_slave_camera_node;
+
+    bool                                m_stereo;
+    bool                                m_torture;
+    bool                                m_auto_shader;
+    bool                                m_auto_flatten;
+    std::vector<std::string>            m_source_files;
+    std::vector<std::string>            m_onscreen_visual_scenes;
+    size_t                              m_onscreen_scene;
+
+    struct CameraInstance {
+        Scene::Node*                    m_node;
+        Scene::Camera*                  m_camera;
+    };
+    std::vector<CameraInstance>         m_camera_instances;
 
 };
+
+namespace {
+
+ViewerApp* app = NULL;
+
+/** GLUT reshape func.
+*
+* Keep track of aspect ratio and set viewport.
+*/
+void
+reshape( int w, int h )
+{
+    app->viewer().setWindowSize( w, h );
+    app->reshape( w, h );
+}
+
+/** GLUT idle callback; trigger continuous rendering. */
+void
+idle()
+{
+   glutPostRedisplay();
+}
+
+void
+wheel( int w, int d, int x, int y )
+{
+    app->viewer().startMotion( ViewManipulator::DOLLY, 0, 0 );
+    app->viewer().motion(d * static_cast<int>( app->viewer().getWindowSize()[0]) / 8, 0 );
+    app->viewer().startMotion( ViewManipulator::NONE, d, 0 );
+    glutPostRedisplay();    
+}
+
+void
+mouse( int b, int s, int x, int y )
+{
+    if( s == GLUT_DOWN ) {
+        int modifier = glutGetModifiers();
+        if( b == GLUT_LEFT_BUTTON ) {
+            if( modifier & GLUT_ACTIVE_SHIFT ) {
+                app->viewer().startMotion( ViewManipulator::ORIENT, x, y );
+            }
+            else {
+                app->viewer().startMotion( ViewManipulator::ROTATE, x, y);
+            }
+        }
+        else if( b == GLUT_MIDDLE_BUTTON ) {
+            app->viewer().startMotion( ViewManipulator::PAN, x, y);
+        }
+        else if(b == GLUT_RIGHT_BUTTON) {
+            if( modifier & GLUT_ACTIVE_SHIFT ) {
+                app->viewer().startMotion( ViewManipulator::FOLLOW, x, y);
+            }
+            else {
+                app->viewer().startMotion( ViewManipulator::ZOOM, x, y);
+            }
+        }   
+    }
+    else {
+        app->viewer().endMotion(x, y);
+    }
+    glutPostRedisplay();  
+}
+
+void
+motion( int x, int y )
+{
+    app->viewer().motion( x, y );
+    glutPostRedisplay();
+}
+
+
+/** Platform-independent get-time-of-day in seconds. */
+double
+getTimeOfDay()
+{
+#if defined(__unix) || defined(__APPLE__)
+   struct timeval tv;
+   struct timezone tz;
+   gettimeofday(&tv, &tz);
+   return tv.tv_sec+tv.tv_usec*1e-6;
+#elif defined(_WIN32)
+   LARGE_INTEGER f;
+   LARGE_INTEGER t;
+   QueryPerformanceFrequency(&f);
+   QueryPerformanceCounter(&t);
+   return t.QuadPart/(double) f.QuadPart;
+#else
+   return 0;
+#endif
+}
+
+void
+display()
+{
+    glm::vec2 winsize = app->viewer().getWindowSize();
+    if( (winsize[0] < 1) || (winsize[1] < 1) ) {
+        return;
+    }
+    static double last_time = getTimeOfDay();
+    static int    frames    = 0;
+    double time = getTimeOfDay();
+    
+    frames++;
+    if( (time - last_time) > 1.f ) {
+        std::cerr << (frames/(time - last_time)) << " fps." << std::endl;
+        frames = 0;
+        last_time = time;
+    }
+  
+    glViewport( 0, 0, (GLsizei)winsize[0], (GLsizei)winsize[1] );
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    app->viewer().update();
+    app->render();
+
+    glutSwapBuffers();
+}
+
+
+
+void
+keyboard( unsigned char key, int x, int y )
+{
+   if(key == 'q' || key == 27) {
+       glutLeaveMainLoop();
+   }
+   glutPostRedisplay();
+}
+
+
+} // of anonymous namespace
+
 
 
 int
 main( int argc, char** argv )
 {
     Scene::initLogger( &argc, argv );
-    ViewerApp app( &argc, argv );
-    app.run();
+
+    // --- parse command line arguments ----------------------------------------
+    bool stereo       = false;
+    bool torture      = false;
+    bool auto_shader  = true;
+    bool auto_flatten = true;
+    float scale       = 1.f;
+    std::vector<std::string> source_files;
+    
+    for(int i=1; i<argc; i++) {
+        std::string param( argv[i] );
+        if( param == "--stereo" ) {
+            stereo = true;
+        }
+        else if( param == "--torture" ) {
+            torture = true;
+        }
+        else if( param == "--auto-shader" ) {
+            auto_shader = true;
+        }
+        else if( param == "--no-auto-shader" ) {
+            auto_shader = false;
+        }
+        else if( param == "--auto-flatten" ) {
+            auto_flatten = true;
+        }
+        else if( param == "--no-auto-flatten" ) {
+            auto_flatten = false;
+        }
+        else if( param.length() > 7 && (param.substr( param.length()-7 ) == ".config" ) ) {
+            // skip
+        }
+        else if( param.length() > 4 && (param.substr( param.length()-4 ) == ".xml" ) ) {
+            source_files.push_back( argv[i] );
+        }
+        else if(param.length() > 4 && (param.substr( param.length()-4 ) == ".dae"  ) ) {
+            source_files.push_back( argv[i] );
+        }
+        else if(param.length() > 4 && (param.substr( param.length()-4 ) == ".DAE"  ) ) {
+            source_files.push_back( argv[i] );
+        }
+        else {
+            scale = static_cast<float>( atof( param.c_str() ) );
+            if( scale == 0.0f ) {
+                scale = 1.0f;
+            }
+        }
+    }    
+    
+    
+    glutInit( &argc, argv );
+    if( stereo ) {
+        glutInitDisplayMode( GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB | GLUT_STEREO );
+    }
+    else {
+        glutInitDisplayMode( GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB );
+    }
+    glutInitWindowSize( 1280, 768 );
+    glutCreateWindow( argv[0] );
+    glewInit();
+    
+    glutReshapeFunc( reshape );
+    glutDisplayFunc( display );
+    glutKeyboardFunc( keyboard );
+    glutIdleFunc( idle );
+    glutMouseFunc( mouse );
+    glutMotionFunc( motion );
+    //glutSpecialFunc( special );
+    glutMouseWheelFunc( wheel );
+    
+    app = new ViewerApp( source_files, stereo, torture, auto_shader, auto_flatten, scale );
+    glutMainLoop();
+    delete app;
+    
     return EXIT_SUCCESS;
 }
