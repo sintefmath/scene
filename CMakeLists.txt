@@ -218,7 +218,7 @@ IF( SCENE_TINIA )
 
     SET_SOURCE_FILES_PROPERTIES( ${LIBSCENE_TINIA_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
     ADD_LIBRARY( scene_tinia STATIC ${LIBSCENE_TINIA_HDR} ${LIBSCENE_TINIA_SRC} )
-    TARGET_LINK_LIBRARIES( scene_tinia ${LOG4CXX_LIBRARIES} ${tinia_LibRenderList_LIBRARY} )
+    TARGET_LINK_LIBRARIES( scene_tinia ${LOG4CXX_LIBRARIES} ${TINIA_LIBRARIES} )
     SET_TARGET_PROPERTIES(scene_tinia PROPERTIES DEBUG_POSTFIX "d")
     SET( SCENE_TINIA_LIB scene_tinia )
 ELSE()
@@ -235,7 +235,7 @@ TARGET_LINK_LIBRARIES( viewer
                        scene_glsl
                        scene_collada
                        ${SCENE_TINIA_LIB}
-                       ${tinia_RenderList_LIBRARY}
+                       ${TINIA_LIBRARIES}
                        ${PLATFORM_DEP_LIBS}
                        ${SIUT2_LIBRARY}
                        ${Freeglut_LIBRARY}
