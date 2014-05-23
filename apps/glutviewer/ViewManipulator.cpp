@@ -34,9 +34,7 @@
 
 ViewManipulator::ViewManipulator(const glm::vec3 &bb_min, const glm::vec3 &bb_max)
     : m_projection(PROJECTION_PERSPECTIVE),
-      m_state( NONE ),
-      m_spin_factor(1),
-      m_last_update( getCurrentTime() )
+      m_state( NONE )
 {
     m_camera_state_curr.m_fov = 90.f; //since glm requires degrees instead of radians
     setViewVolume(bb_min, bb_max);
@@ -45,30 +43,12 @@ ViewManipulator::ViewManipulator(const glm::vec3 &bb_min, const glm::vec3 &bb_ma
     viewAll();
 }
 
-double
-ViewManipulator::getCurrentTime()
-{
-#if defined(__unix) || defined(__APPLE__)
-    struct timeval tv;
-    struct timezone tz;
-    gettimeofday(&tv, &tz);
-    return tv.tv_sec+tv.tv_usec*1e-6;
-#elif defined(_WIN32)
-    LARGE_INTEGER f;
-    LARGE_INTEGER t;
-    QueryPerformanceFrequency(&f);
-    QueryPerformanceCounter(&t);
-    return t.QuadPart/(double) f.QuadPart;
-#endif
-}
 
 void
 ViewManipulator::startMotion(int state, int x, int y)
 {
-    m_mouse_state_curr.m_mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
-    m_mouse_state_curr.m_elapsed = 0.f;
+    m_mouse_state_curr = glm::vec2(static_cast<float>(x), static_cast<float>(y));
     m_mouse_state_init = m_mouse_state_prev = m_mouse_state_curr;
-    m_last_update = getCurrentTime();
 
     m_camera_state_init = m_camera_state_curr;
     if(state == ROTATE) {
@@ -100,18 +80,13 @@ ViewManipulator::startMotion(int state, int x, int y)
 void
 ViewManipulator::motion(int x, int y )
 {
-    double current = getCurrentTime();
-    double elapsed = current - m_last_update;
-    m_last_update = current;
-
     m_mouse_state_prev = m_mouse_state_curr;
-    m_mouse_state_curr.m_mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
-    m_mouse_state_curr.m_elapsed = elapsed;
+    m_mouse_state_curr = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 
     if(m_state == ROTATE) {
         glm::vec3 axis;
         float angle;
-        if(trackball(axis, angle, m_mouse_state_init.m_mouse_pos, m_mouse_state_curr.m_mouse_pos)) {
+        if(trackball(axis, angle, m_mouse_state_init, m_mouse_state_curr)) {
             glm::quat rot;
             float sinA = static_cast<float>(std::sin(0.5*angle));
             float cosA = static_cast<float>(std::cos(0.5*angle));
@@ -129,8 +104,8 @@ ViewManipulator::motion(int x, int y )
     }
     else if( m_state == ORIENT ) {
         glm::vec2 d =
-                normDevFromWinCoords( m_win_size, m_mouse_state_curr.m_mouse_pos )-
-                normDevFromWinCoords( m_win_size, m_mouse_state_init.m_mouse_pos );
+                normDevFromWinCoords( m_win_size, m_mouse_state_curr )-
+                normDevFromWinCoords( m_win_size, m_mouse_state_init );
 
         glm::quat rot =
                 glm::angleAxis(-45.f*d[0], glm::vec3(0.f, 1.f, 0.f) ) *
@@ -146,8 +121,8 @@ ViewManipulator::motion(int x, int y )
     }
     else if(m_state == PAN) {
         glm::vec3 ms_mouse_a, ms_mouse_b;
-        ms_mouse_a = mousePosOnInterestPlaneAsObjectCoords(normDevFromWinCoords(m_win_size, m_mouse_state_init.m_mouse_pos));
-        ms_mouse_b = mousePosOnInterestPlaneAsObjectCoords(normDevFromWinCoords(m_win_size, m_mouse_state_curr.m_mouse_pos));
+        ms_mouse_a = mousePosOnInterestPlaneAsObjectCoords(normDevFromWinCoords(m_win_size, m_mouse_state_init));
+        ms_mouse_b = mousePosOnInterestPlaneAsObjectCoords(normDevFromWinCoords(m_win_size, m_mouse_state_curr));
         m_camera_state_curr.m_center_of_interest = m_camera_state_init.m_center_of_interest - (ms_mouse_b - ms_mouse_a);
         calculateMatrices();
     }
@@ -158,8 +133,8 @@ ViewManipulator::motion(int x, int y )
         if(plane.w != plane.w) {
             return;
         }
-        glm::vec2 a_nd = normDevFromWinCoords(m_win_size, m_mouse_state_init.m_mouse_pos);
-        glm::vec2 b_nd = normDevFromWinCoords(m_win_size, m_mouse_state_curr.m_mouse_pos);
+        glm::vec2 a_nd = normDevFromWinCoords(m_win_size, m_mouse_state_init);
+        glm::vec2 b_nd = normDevFromWinCoords(m_win_size, m_mouse_state_curr);
 
         glm::vec3 d = getPointOnPlaneFromNormDevCoords(m_camera_state_init.m_model_view_projection, plane, b_nd) -
                 getPointOnPlaneFromNormDevCoords(m_camera_state_init.m_model_view_projection, plane, a_nd);
@@ -173,8 +148,8 @@ ViewManipulator::motion(int x, int y )
     }
     else if( m_state == FOLLOW ) {
         glm::vec2 d =
-                normDevFromWinCoords(m_win_size, m_mouse_state_curr.m_mouse_pos) -
-                normDevFromWinCoords(m_win_size, m_mouse_state_init.m_mouse_pos);
+                normDevFromWinCoords(m_win_size, m_mouse_state_curr) -
+                normDevFromWinCoords(m_win_size, m_mouse_state_init);
 
         glm::vec3 dir = glm::conjugate(m_camera_state_init.m_orientation) * glm::vec3( 0.f, 0.f, 1.f );
         dir = glm::normalize( dir - glm::dot(dir,m_up_axis)*m_up_axis );
@@ -196,8 +171,8 @@ m_camera_state_curr.m_model_view = glm::translate( glm::mat4(), cam_pos );
     }
     else if(m_state == ZOOM) {
         glm::vec2 d =
-                normDevFromWinCoords(m_win_size, m_mouse_state_curr.m_mouse_pos) -
-                normDevFromWinCoords(m_win_size, m_mouse_state_init.m_mouse_pos);
+                normDevFromWinCoords(m_win_size, m_mouse_state_curr) -
+                normDevFromWinCoords(m_win_size, m_mouse_state_init);
 
         m_camera_state_curr.m_distance = m_camera_state_init.m_distance * (1 + d[1]);
 
@@ -214,15 +189,13 @@ m_camera_state_curr.m_model_view = glm::translate( glm::mat4(), cam_pos );
 void
 ViewManipulator::update()
 {
+#if 0
     if(m_state == SPIN) {
         float axis_length = glm::length( m_spin_axis );
         if( axis_length < std::numeric_limits<float>::epsilon() ) {
             m_state = NONE;
         }
         else {
-            double current = getCurrentTime();
-            double elapsed = current - m_last_update;
-            m_last_update = current;
 
             //doing manual rotation instead of glm since it avoids conversion to and from degrees.
             glm::quat spin;
@@ -240,23 +213,21 @@ ViewManipulator::update()
             calculateMatrices();
         }
     }
+#endif
 }
 
 void
 ViewManipulator::endMotion(int x, int y )
 {
-    double current = getCurrentTime();
-    double elapsed = current - m_last_update;
-    m_last_update = current;
-
+#if 0
     MouseState curr;
-    curr.m_mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
+    curr = glm::vec2(static_cast<float>(x), static_cast<float>(y));
     curr.m_elapsed = static_cast<float>(elapsed);
     if(m_state == ROTATE) {
         if(false && curr.m_elapsed < 0.5 ) {
             float angle;
-            if(trackball(m_spin_axis, angle, m_mouse_state_prev.m_mouse_pos,
-                         curr.m_mouse_pos))
+            if(trackball(m_spin_axis, angle, m_mouse_state_prev,
+                         curr))
             {
                 m_spin_speed = angle / (m_mouse_state_prev.m_elapsed + m_mouse_state_curr.m_elapsed +
                                         curr.m_elapsed);
@@ -264,10 +235,9 @@ ViewManipulator::endMotion(int x, int y )
             }
         }
     }
-    if (m_state != SPIN && m_state != NONE) {
-        motion(x, y );
-        m_state = NONE;
-    }
+#endif
+    motion( x, y );
+    m_state = NONE;
 }
 
 void

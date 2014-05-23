@@ -1,10 +1,3 @@
-#ifdef _WIN32
-#define NOMINMAX
-#include <Windows.h>
-#pragma comment( lib, "WSock32" )
-#else
-#include <sys/time.h>
-#endif
 
 #include <GL/glew.h>
 #ifdef __APPLE__
@@ -15,6 +8,7 @@
 
 #include <iostream>
 #include "Viewer.hpp"
+#include "Utils.hpp"
 
 namespace {
 
@@ -81,27 +75,6 @@ motion( int x, int y )
     glutPostRedisplay();
 }
 
-
-/** Platform-independent get-time-of-day in seconds. */
-double
-getTimeOfDay()
-{
-#if defined(__unix) || defined(__APPLE__)
-   struct timeval tv;
-   struct timezone tz;
-   gettimeofday(&tv, &tz);
-   return tv.tv_sec+tv.tv_usec*1e-6;
-#elif defined(_WIN32)
-   LARGE_INTEGER f;
-   LARGE_INTEGER t;
-   QueryPerformanceFrequency(&f);
-   QueryPerformanceCounter(&t);
-   return t.QuadPart/(double) f.QuadPart;
-#else
-   return 0;
-#endif
-}
-
 void
 display()
 {
@@ -109,9 +82,9 @@ display()
     if( (winsize[0] < 1) || (winsize[1] < 1) ) {
         return;
     }
-    static double last_time = getTimeOfDay();
+    static double last_time = getCurrentTime();
     static int    frames    = 0;
-    double time = getTimeOfDay();
+    double time = getCurrentTime();
     
     frames++;
     if( (time - last_time) > 1.f ) {

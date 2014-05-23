@@ -1,13 +1,38 @@
 /* -*- mode: C++; tab-width:4; c-basic-offset: 4; indent-tabs-mode:nil -*- */
 #pragma once
 
-//for Win32
+#ifdef _WIN32
+#define NOMINMAX
+#include <Windows.h>
+#pragma comment( lib, "WSock32" )
+#else
+#include <sys/time.h>
+#endif
+
 #ifndef M_2_PI
 #define M_2_PI 1.57079632679489661923
 #endif
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+inline
+double
+getCurrentTime()
+{
+#if defined(__unix) || defined(__APPLE__)
+    struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    return tv.tv_sec+tv.tv_usec*1e-6;
+#elif defined(_WIN32)
+    LARGE_INTEGER f;
+    LARGE_INTEGER t;
+    QueryPerformanceFrequency(&f);
+    QueryPerformanceCounter(&t);
+    return t.QuadPart/(double) f.QuadPart;
+#endif
+}
 
 
 /** Return the cardinal axis that most closely map to the camera's y-axis.

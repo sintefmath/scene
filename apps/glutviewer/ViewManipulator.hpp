@@ -59,21 +59,6 @@ public:
     /** Creates new view manipulator that views the bounding box. */
     ViewManipulator(const glm::vec3 &bb_min, const glm::vec3 &bb_max);
     
-    double
-    getCurrentTime();
-    
-    /** Method that decreases the spin-factor by 0.1f.
-             * Default spin-factor = 1.0f*/
-    void
-    decreaseSpin()
-    { m_spin_factor -= 0.1f; }
-    
-    /** Method that increases the spin-factor by 0.1f.
-             * Default spin-factor = 1.0f*/
-    void
-    increaseSpin()
-    { m_spin_factor += 0.1f; }
-    
     /** Sets new camera state.
      *
      * Called by the window manager to set a new camera state.
@@ -229,12 +214,6 @@ public:
     
 
 protected:
-    /** Struct for keeping track of mouse states. */
-    struct MouseState
-    {
-        glm::vec2 m_mouse_pos;
-        float m_elapsed;
-    };
 
     /** Struct keeping track of the camera states. */
     struct CameraState
@@ -253,9 +232,9 @@ protected:
         float     m_fov;
     };
 
-    MouseState      m_mouse_state_init;
-    MouseState      m_mouse_state_prev;
-    MouseState      m_mouse_state_curr;
+    glm::vec2       m_mouse_state_init;
+    glm::vec2       m_mouse_state_prev;
+    glm::vec2       m_mouse_state_curr;
     CameraState     m_camera_state_init;
     CameraState     m_camera_state_curr;
     ProjectionType  m_projection;
@@ -263,10 +242,7 @@ protected:
     glm::vec3       m_spin_axis;
     glm::vec3       m_up_axis;
     float           m_spin_speed;
-    float           m_spin_factor;
     BBox            m_view_volume;
-    double          m_last_update;
-    double          m_prev_time;
     glm::vec2       m_win_size;
     
     /** Calculates the matrices used by the viewer. */
