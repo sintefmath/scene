@@ -1,26 +1,7 @@
 #pragma once
 
-#include <glm/gtc/type_ptr.hpp> //for c_ptr equvialent
 #include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp> //for rotate quat with vec3
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/quaternion.hpp>
-
-#include "Utils.hpp"
-
-#define DEBUG_VIEW
-
-#ifdef DEBUG_VIEW
-#include <cmath>
-#define THROW_VIEW
-#include <stdexcept>
-#endif
-
-#ifndef M_PI
-#define M_PI 3.1415926535
-#endif
 
 /** View manipulator agnostic of windowing system.
  *

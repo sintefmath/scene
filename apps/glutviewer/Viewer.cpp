@@ -1,4 +1,5 @@
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
 #include <scene/Camera.hpp>
 #include <scene/tools/BBoxTool.hpp>
 #include <scene/tools/ShaderGen.hpp>
