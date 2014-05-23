@@ -1,3 +1,21 @@
+/* Copyright STIFTELSEN SINTEF 2014
+ * 
+ * This file is part of Scene.
+ * 
+ * Scene is free software: you can redistribute it and/or modifyit under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ * 
+ * Scene is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+ * details.
+ *  
+ * You should have received a copy of the GNU Affero General Public License
+ * along with the Scene.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <boost/lexical_cast.hpp>
 #include "scene/Log.hpp"
 #include "scene/Pass.hpp"
@@ -8,16 +26,6 @@ namespace Scene {
     namespace Collada {
         using std::string;
         using std::vector;
-
-
-    /*
-#define GL_TEXTURE_CUBE_MAP_POSITIVE_X 0x8515
-#define GL_TEXTURE_CUBE_MAP_NEGATIVE_X 0x8516
-#define GL_TEXTURE_CUBE_MAP_POSITIVE_Y 0x8517
-#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 0x8518
-#define GL_TEXTURE_CUBE_MAP_POSITIVE_Z 0x8519
-#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 0x851A
-*/
 
 static
 size_t

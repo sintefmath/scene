@@ -1,3 +1,21 @@
+/* Copyright STIFTELSEN SINTEF 2014
+ * 
+ * This file is part of Scene.
+ * 
+ * Scene is free software: you can redistribute it and/or modifyit under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ * 
+ * Scene is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+ * details.
+ *  
+ * You should have received a copy of the GNU Affero General Public License
+ * along with the Scene.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 
 #include "scene/Log.hpp"
 #include "scene/SourceBuffer.hpp"
@@ -249,12 +267,12 @@ RenderAction::createSetInputs( const DataBase&                database,
         const Geometry::VertexInput& input = geometry->vertexInput( semantic );
         if( !input.m_enabled ) {
             SCENELOG_ERROR( log, "Required geometry input for semantic " << semantic << "missing." );
-            return false;
+            return NULL;
         }
         const SourceBuffer* buffer = database.library<SourceBuffer>().get( input.m_source_buffer_id );
         if( buffer == NULL ) {
             SCENELOG_ERROR( log, "Unable to find buffer '" << input.m_source_buffer_id << '\'' );
-            return false;
+            return NULL;
         }
         action->m_set_inputs.m_items[i].m_source = buffer;
         action->m_set_inputs.m_items[i].m_type = buffer->elementType();
