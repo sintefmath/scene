@@ -36,7 +36,6 @@ General:
 - GLM
 - GLUT/FreeGLUT         Used by GLUT-based viewer.
 - Tinia                 Used by Tinia-based viewer and Tinia-bridge.
-- SIUT2                 Used by GLUT-based viewer.
 
 Windows:
 - zlib
