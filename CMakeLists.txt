@@ -216,6 +216,7 @@ IF( SCENE_TINIA )
     TARGET_LINK_LIBRARIES( scene_tinia ${LOG4CXX_LIBRARIES} ${TINIA_LIBRARIES} )
     SET_TARGET_PROPERTIES(scene_tinia PROPERTIES DEBUG_POSTFIX "d")
     SET( SCENE_TINIA_LIB scene_tinia )
+
 ELSE()
     SET( SCENE_TINIA_LIB )
 ENDIF()
@@ -289,7 +290,9 @@ IF(SCENE_TINIA)
                            ${LOG4CXX_LIBRARIES}
                            ${Boost_SYSTEM_LIBRARY}
 			   ${TINIA_LIBRARIES}
-                           ${PNG_LIBRARIES} )
+                           ${PNG_LIBRARIES} 
+                           )
+   
 
     IF(SCENE_TINIA_SERVER)
       ADD_EXECUTABLE( tinia_cloud_viewer ${APP_TINIA_VIEWER_HDR}
@@ -346,6 +349,20 @@ if( ${SCENE_UNITTEST} )
     ADD_TEST( AllTestsInscene_unit scene_unit)
 ENDIF( ${SCENE_UNITTEST} )
 
+IF( SCENE_TINIA )
+    EXPORT( TARGETS scene_tinia scene scene_glsl scene_collada 
+      FILE "${PROJECT_BINARY_DIR}/SceneTargets${SCENE_TARGETS_APPEND}.cmake")
+ELSE()
+    EXPORT( TARGETS scene scene_glsl scene_collada 
+      FILE "${PROJECT_BINARY_DIR}/SceneTargets${SCENE_TARGETS_APPEND}.cmake")
+    
+ENDIF()
+
+set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/include" )
+set(CONF_APPS_DIR "${PROJECT_BINARY_DIR}")
+configure_file(SceneConfig.cmake.in
+  "${PROJECT_BINARY_DIR}/SceneConfig.cmake" @ONLY)
+
 
 # 'install' target
 IF(NOT WIN32)
@@ -354,6 +371,7 @@ IF(NOT WIN32)
     DESTINATION include
     FILES_MATCHING PATTERN "*.hpp"
     PATTERN ".svn" EXCLUDE)
+  INSTALL(EXPORT SceneTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT scene_dev)
 ELSE()
   SET(CMAKE_INSTALL_PREFIX CACHE INTERNAL "")
   SET(scene_INSTALL_PREFIX "$ENV{PROGRAMFILES(x86)}/SINTEF/scene"

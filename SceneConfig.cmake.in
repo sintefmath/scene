@@ -1,0 +1,25 @@
+
+# Only multiple configuration systems like MSVC and nmake, 
+# we get all configurations included in one targets file,
+# otherwise we use one target file for each configuration
+IF(CMAKE_CONFIGURATION_TYPES) 
+	SET(SCENE_TARGETS_APPEND "")
+ELSE()
+	SET(SCENE_TARGETS_APPEND ${CMAKE_BUILD_TYPE})
+ENDIF()
+
+# - Config file for the scene package
+# It defines the following variables
+#  SCENE_INCLUDE_DIRS - include directory for Tinia
+#  SCENE_LIBRARIES    - libraries to link against
+
+
+
+# Compute paths
+get_filename_component(SCENE_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(SCENE_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+set(SCENE_INCLUDE_DIR "@CONF_INCLUDE_DIRS@")
+
+set(SCENE_APPS_DIR "@CONF_APPS_DIR@")
+set(SCENE_LIBRARIES @SCENE_LIBRARIES_FOR_CONFIG@)
+
