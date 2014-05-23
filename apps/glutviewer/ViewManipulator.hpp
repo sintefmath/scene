@@ -96,28 +96,24 @@ public:
     /** Sets the orientation of the camera to that of the quaternion. */
     void setOrientation(const glm::quat &q);
     
-    /** Sets the view volume of the viewer to an axis aligned bounding box give by the input parameters.
-             *
-             * \param[in] bb_min the min corner of the AABB.
-             * \param[in] bb_max the max corner of the AABB.
-             * Calls calculateMatrices()
-             */
+    /** Set the view volume as an axis-aligned bounding box. */
     void setViewVolume(const glm::vec3 &bb_min, const glm::vec3 &bb_max);
     
-    /** Sets the camera from an affine transformation and a projection matrix.
+    /** Positions and configures the camera using an affine transformation and a projection matrix.
      *
      * It uses the rotation and translation parts of the modelview matrix to
      * position and orient the camera, and uses the angle between the top and
      * bottom frustum planes to deduce the field-of-view along y.
      *
-     * If guess_bbox is enabled, it positions the center of interest in the
-     * center between the near and far planes and sets the bounding box to be an
-     * axis aligned box centered around this point with side lengths equal to
-     * the distance between the near and far planes.
-     *
      * \param modelview  An homogeneous affine transform matrix that encodes the
      *                   position and orientation of the camera.
      * \param projection An homogeneous projection matrix.
+     *
+     * \param guess_bbox If enabled, the center of interest is positioned
+     *                   halfway between the near and far planes, and the
+     *                   bounding box is an axis-aligned box centered around the
+     *                   center of interest, with side-lengths equal to the
+     *                   distance between the near and far planes.
      *
      * \author Christopher Dyken, <christopher.dyken@sintef.no>
      */
@@ -128,10 +124,7 @@ public:
     /** Updates the view volume, but doesn't move the camera. */
     void updateViewVolume(const glm::vec3 &bb_min, const glm::vec3 bb_max);
     
-    /** Sets the viewer to have the entire AABB in view.
-     *
-     * Updates camera center of interest and distance.
-     */
+    /** Sets the viewer to have the entire AABB in view. */
     void viewAll();
     
     /** Get current modelview matrix. */
