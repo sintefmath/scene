@@ -8,7 +8,6 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "BBox.hpp"
 #include "Utils.hpp"
 
 #define DEBUG_VIEW
@@ -242,7 +241,8 @@ protected:
     glm::vec3       m_spin_axis;
     glm::vec3       m_up_axis;
     float           m_spin_speed;
-    BBox            m_view_volume;
+    glm::vec3       m_bbox_min;
+    glm::vec3       m_bbox_max;
     glm::vec2       m_win_size;
     
     /** Calculates the matrices used by the viewer. */

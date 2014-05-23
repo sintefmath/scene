@@ -14,7 +14,6 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "BBox.hpp"
 #include "Utils.hpp"
 
 #define DEBUG_VIEW
@@ -155,7 +154,7 @@ ViewManipulator::motion(int x, int y )
         dir = glm::normalize( dir - glm::dot(dir,m_up_axis)*m_up_axis );
         m_camera_state_curr.m_center_of_interest =
                 m_camera_state_init.m_center_of_interest +
-                d[1] * m_view_volume.getRadius() * dir;
+                d[1] * glm::distance( m_bbox_min, m_bbox_max ) * dir;
 
         /*
 
@@ -176,7 +175,7 @@ m_camera_state_curr.m_model_view = glm::translate( glm::mat4(), cam_pos );
 
         m_camera_state_curr.m_distance = m_camera_state_init.m_distance * (1 + d[1]);
 
-        float distTemp =  0.01f * m_view_volume.getRadius();
+        float distTemp =  0.01f * glm::distance( m_bbox_min, m_bbox_max );
 
         if(m_camera_state_curr.m_distance < distTemp)
         {
@@ -274,7 +273,8 @@ void
 ViewManipulator::setViewVolume( const glm::vec3 &bb_min,
                                 const glm::vec3 &bb_max )
 {
-    m_view_volume = BBox(bb_min, bb_max);
+    m_bbox_min = bb_min;
+    m_bbox_max = bb_max;
     viewAll();
     calculateMatrices();
 }
@@ -322,8 +322,8 @@ ViewManipulator::setCamera( const glm::mat4& modelview,
         glm::vec3 mb = glm::vec3( 0.f, 0.f, m_camera_state_curr.m_distance);
         m_camera_state_curr.m_center_of_interest = Ai*(op - mb );
 
-        m_view_volume = BBox( m_camera_state_curr.m_center_of_interest - glm::vec3(d),
-                              m_camera_state_curr.m_center_of_interest + glm::vec3(d) );
+        m_bbox_min = m_camera_state_curr.m_center_of_interest - glm::vec3(d);
+        m_bbox_max = m_camera_state_curr.m_center_of_interest + glm::vec3(d);
     }
     else {
         glm::vec3 mb = glm::vec3( 0.f, 0.f, m_camera_state_curr.m_distance);
@@ -337,15 +337,16 @@ void
 ViewManipulator::updateViewVolume( const glm::vec3 &bb_min,
                                    const glm::vec3 bb_max )
 {
-    m_view_volume = BBox(bb_min, bb_max);
+    m_bbox_min = bb_min;
+    m_bbox_max = bb_max;
     calculateMatrices();
 }
 
 void
 ViewManipulator::viewAll()
 {
-    m_camera_state_curr.m_center_of_interest = 0.5f*( m_view_volume.getMin() + m_view_volume.getMax() );
-    m_camera_state_curr.m_distance = m_view_volume.getRadius() / tanf(m_camera_state_curr.m_fov*(M_PI/360.f));
+    m_camera_state_curr.m_center_of_interest = 0.5f*( m_bbox_min + m_bbox_max );
+    m_camera_state_curr.m_distance = glm::distance( m_bbox_min, m_bbox_max ) / tanf(m_camera_state_curr.m_fov*(M_PI/360.f));
     calculateMatrices();
 }
 
@@ -376,13 +377,10 @@ ViewManipulator::calculateMatrices()
 
     // determine near_ and far
     float near_, far_;
-    glm::vec3 bbmin = m_view_volume.getMin();
-    glm::vec3 bbmax = m_view_volume.getMax();
-
     for(int i=0; i<8; i++) {
-        glm::vec4 p = glm::vec4( (i&1)==0 ? bbmin.x : bbmax.x,
-                                 (i&2)==0 ? bbmin.y : bbmax.y,
-                                 (i&4)==0 ? bbmin.z : bbmax.z,
+        glm::vec4 p = glm::vec4( (i&1)==0 ? m_bbox_min.x : m_bbox_max.x,
+                                 (i&2)==0 ? m_bbox_min.y : m_bbox_max.y,
+                                 (i&4)==0 ? m_bbox_min.z : m_bbox_max.z,
                                  1.f );
         glm::vec4 h = m_camera_state_curr.m_model_view * p;
         float d = (1.f/h.w)*h.z;
@@ -398,9 +396,9 @@ ViewManipulator::calculateMatrices()
     // use infty-norm of bbox to get an idea of the scale of the scene, and
     // determine an appropriate epsilon
     float e = std::max( std::numeric_limits<float>::epsilon(),
-                        0.001f*std::max( bbmax.x-bbmin.x,
-                                         std::max( bbmax.y-bbmin.y,
-                                                   bbmax.z-bbmin.z )
+                        0.001f*std::max( m_bbox_max.x-m_bbox_min.x,
+                                         std::max( m_bbox_max.y-m_bbox_min.y,
+                                                   m_bbox_max.z-m_bbox_min.z )
                                          )
                         );
     far_  = std::min( -e, far_-e );
