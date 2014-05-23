@@ -28,8 +28,6 @@ IF( EXTEND_CMAKE_MODULE_PATH )
     "./cmake/Modules"
     "~/cmake/Modules"
 #    "$ENV{HOMEPATH}/cmake/Modules"
-    "../siut/cmakemacros"
-    "../siut"
     "."
     "C:/cmake/Modules"
     "C:/Dependencies/cmake/Modules"
@@ -58,7 +56,6 @@ ELSE()
     SET( LOG4CXX_LIBRARIES )
 ENDIF()
 
-FIND_PACKAGE( SIUT2 REQUIRED)
 SET(Boost_ADDITIONAL_VERSIONS "1.47" "1.47.0")
 FIND_PACKAGE( Boost REQUIRED )
 FIND_PACKAGE( OpenGL REQUIRED )
@@ -156,9 +153,7 @@ INCLUDE_DIRECTORIES(
     ${Boost_INCLUDE_DIR}
     ${PNG_INCLUDE_DIR}
     ${LOG4CXX_INCLUDE_DIR}
-    ${SIUT2_INCLUDE_DIR}
     "./include"
-    "../siut/"
 )
 
 LINK_DIRECTORIES(
@@ -226,10 +221,14 @@ ELSE()
 ENDIF()
 
 # --- glut viewer app --------------------------------------------------------
-FILE( GLOB APP_VIEWER_SRC "apps/viewer/*.cpp" )
-SOURCE_GROUP( "app-viewer" FILES ${APP_VIEWER_SRC} )
+FILE( GLOB APP_VIEWER_SRC "apps/glutviewer/*.cpp" )
+FILE( GLOB APP_VIEWER_HDR "apps/glutviewer/*.hpp" )
 
-ADD_EXECUTABLE( viewer ${APP_VIEWER_SRC} )
+SET_SOURCE_FILES_PROPERTIES( ${APP_VIEWER_HDR} PROPERTIES HEADER_FILE_ONLY TRUE )
+
+SOURCE_GROUP( "app-glutviewer" FILES ${APP_VIEWER_SRC} ${APP_VIEWER_HDR})
+
+ADD_EXECUTABLE( viewer ${APP_VIEWER_SRC} ${APP_VIEWER_HDR} )
 TARGET_LINK_LIBRARIES( viewer
                        scene
                        scene_glsl
@@ -237,7 +236,6 @@ TARGET_LINK_LIBRARIES( viewer
                        ${SCENE_TINIA_LIB}
                        ${TINIA_LIBRARIES}
                        ${PLATFORM_DEP_LIBS}
-                       ${SIUT2_LIBRARY}
                        ${Freeglut_LIBRARY}
                        ${GLEW_LIBRARY}
                        ${OPENGL_LIBRARIES}
