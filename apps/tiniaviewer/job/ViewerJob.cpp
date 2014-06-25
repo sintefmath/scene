@@ -95,6 +95,22 @@ TiniaViewerJob::TiniaViewerJob( const std::list<std::string>& files )
     rightcol->addChild( new tinia::model::gui::VerticalSpace );
     rightcol->addChild( new tinia::model::gui::Label( "visual_scenes" ) );
     rightcol->addChild( new tinia::model::gui::ComboBox( "visual_scenes" ) );
+
+    //----------------------------------------------------------------------------------------------------
+    //
+    // autoProxy enab,ing/testing
+    //
+    m_model->addElement<bool>( "useAutoProxy", false );
+    m_model->addAnnotation("useAutoProxy", "Automatically generated proxy geometry");
+    m_model->addConstrainedElement<int>("splats", 64, 2, 512);
+    m_model->addAnnotation("splats", "Number of splats)");
+    rightcol->addChild( new tinia::model::gui::CheckBox("useAutoProxy") );
+    rightcol->addChild( new tinia::model::gui::HorizontalSlider("splats") );
+    rightcol->addChild( new tinia::model::gui::Label("splats", false));
+    rightcol->addChild( new tinia::model::gui::Label("splats", true));
+    //
+    //----------------------------------------------------------------------------------------------------
+
     rightcol->addChild( new tinia::model::gui::VerticalExpandingSpace );
 
     m_model->setGUILayout( root, tinia::model::gui::DESKTOP );
