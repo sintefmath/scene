@@ -102,12 +102,59 @@ TiniaViewerJob::TiniaViewerJob( const std::list<std::string>& files )
     //
     m_model->addElement<bool>( "useAutoProxy", false );
     m_model->addAnnotation("useAutoProxy", "Automatically generated proxy geometry");
-    m_model->addConstrainedElement<int>("splats", 64, 2, 512);
+
+    m_model->addElement<bool>( "autoProxyDebugging", true );
+    m_model->addAnnotation("autoProxyDebugging", "Debug mode");
+    m_model->addElement<bool>( "debugSplatCol", false );
+    m_model->addAnnotation("debugSplatCol", "Index coloring (r, g, b, y, c, m)");
+    m_model->addElement<bool>( "decayMode", false );
+    m_model->addAnnotation("decayMode", "Splats decaying from center");
+    m_model->addElement<bool>( "roundSplats", false );
+    m_model->addAnnotation("roundSplats", "Circular splats");
+    m_model->addElement<bool>( "screenSpaceSized", true );
+    m_model->addAnnotation("screenSpaceSized", "Screen-space-sized splats");
+    m_model->addConstrainedElement<int>("overlap", 200, 1, 300);
+    m_model->addAnnotation("overlap", "Overlap factor)");
+    m_model->addElement<bool>( "alwaysShowMostRecent", true );
+    m_model->addAnnotation("alwaysShowMostRecent", "Always show most recent proxy model");
+    m_model->addConstrainedElement<int>("splats", 16, 2, 512);
     m_model->addAnnotation("splats", "Number of splats)");
+    m_model->addElement<bool>( "resetAllModels", false );
+    m_model->addAnnotation("resetAllModels", "Remove all models, and update just once");
+    m_model->addElement<bool>( "useISTC", true );
+    m_model->addAnnotation("useISTC", "Use intra-splat texcoo");
+    m_model->addElement<bool>( "splatOutline", false );
+    m_model->addAnnotation("splatOutline", "Square splat outline");
+    m_model->addElement<bool>( "reloadShader", false );
+    m_model->addAnnotation("reloadShader", "Reload shader");
+    m_model->addElement<bool>( "useFragExt", true );
+    m_model->addAnnotation("useFragExt", "Use FragDepthExt if available");
+    m_model->addElement( "fragExtStatus", "---" );
+    m_model->addElement( "consoleLog", "---" );
+    m_model->addElement<int>( "cntr", 0 );
+
     rightcol->addChild( new tinia::model::gui::CheckBox("useAutoProxy") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("autoProxyDebugging") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("debugSplatCol") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("decayMode") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("roundSplats") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("screenSpaceSized") );
+    rightcol->addChild( new tinia::model::gui::HorizontalSlider("overlap") );
+    rightcol->addChild( new tinia::model::gui::Label("overlap", false) );
+    rightcol->addChild( new tinia::model::gui::Label("overlap", true) );
+    rightcol->addChild( new tinia::model::gui::CheckBox("alwaysShowMostRecent") );
     rightcol->addChild( new tinia::model::gui::HorizontalSlider("splats") );
-    rightcol->addChild( new tinia::model::gui::Label("splats", false));
-    rightcol->addChild( new tinia::model::gui::Label("splats", true));
+    rightcol->addChild( new tinia::model::gui::Label("splats", false) );
+    rightcol->addChild( new tinia::model::gui::Label("splats", true) );
+    rightcol->addChild( new tinia::model::gui::Button("resetAllModels") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("useISTC") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("splatOutline") );
+    rightcol->addChild( new tinia::model::gui::Button("reloadShader") );
+    rightcol->addChild( new tinia::model::gui::CheckBox("useFragExt") );
+    rightcol->addChild( new tinia::model::gui::Label("fragExtStatus", true) );
+    rightcol->addChild( new tinia::model::gui::Label("consoleLog", false) );
+    rightcol->addChild( new tinia::model::gui::Label("consoleLog", true) );
+
     //
     //----------------------------------------------------------------------------------------------------
 
