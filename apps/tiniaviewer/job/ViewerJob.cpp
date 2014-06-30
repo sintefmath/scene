@@ -98,8 +98,9 @@ TiniaViewerJob::TiniaViewerJob( const std::list<std::string>& files )
 
     //----------------------------------------------------------------------------------------------------
     //
-    // autoProxy enab,ing/testing
+    // autoProxy enabling/testing
     //
+#if 1
     m_model->addElement<bool>( "useAutoProxy", false );
     m_model->addAnnotation("useAutoProxy", "Automatically generated proxy geometry");
 
@@ -154,7 +155,7 @@ TiniaViewerJob::TiniaViewerJob( const std::list<std::string>& files )
     rightcol->addChild( new tinia::model::gui::Label("fragExtStatus", true) );
     rightcol->addChild( new tinia::model::gui::Label("consoleLog", false) );
     rightcol->addChild( new tinia::model::gui::Label("consoleLog", true) );
-
+#endif
     //
     //----------------------------------------------------------------------------------------------------
 
